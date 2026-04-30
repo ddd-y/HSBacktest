@@ -20,5 +20,6 @@ public:
 
 	inline void calculate_factors();
 
+	//这一块结构不好，后边得改，先这样
 	FactorBase* get_factor_base() const { return factor_base; }
 };

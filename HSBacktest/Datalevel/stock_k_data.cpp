@@ -16,7 +16,7 @@ StockKData::StockKData(const std::string& code) :stock_code(code)
 	{
 		rebalance_index.push_back(i);
 	}
-	//后边要改
+	//后边得改
 	factor_base = new FactorBase(rebalance_index.size(), {true,true,true,true,true});
 }
 
