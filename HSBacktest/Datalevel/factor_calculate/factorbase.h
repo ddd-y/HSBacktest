@@ -33,11 +33,11 @@ enum FactorType {
 class FactorBase
 {
 private:
-    momentum_20* momentum_20_calculator;
-    ep_ratio* ep_ratio_calculator;
+	momentum_20* momentum_20_calculator;
+	ep_ratio* ep_ratio_calculator;
     log_mcap* log_mcap_calculator;
-    volatility_20* volatility_20_calculator;
-    turnover_20* turnover_20_calculator;
+	volatility_20* volatility_20_calculator;
+	turnover_20* turnover_20_calculator;
 public:
 	momentum_20* get_momentum_20_calculator() const { return momentum_20_calculator; }
 	ep_ratio* get_ep_ratio_calculator() const { return ep_ratio_calculator; }
