@@ -2,6 +2,8 @@
 #include"stock_k_data.h"
 #include<vector>
 #include<string>
+
+// 全局数据类，负责存储所有股票回测所需要的K线数据
 class GlobalData
 {
 private:
