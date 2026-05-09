@@ -66,26 +66,4 @@ namespace csvreader {
         }
         return result;
     }
-
-    // 读取StockDailyTransactionCost
-    inline std::vector<StockDailyTransactionCost> read_stock_daily_transaction_cost(const std::string& filename)
-    {
-        std::vector<StockDailyTransactionCost> result;
-        try {
-            // 字段数量：6个
-            io::CSVReader<6> in(filename);
-            in.read_header(io::ignore_extra_column,
-                "commission_rate", "stamp_duty_rate", "transfer_fee_rate",
-                "slippage_rate", "market_impact_coeff", "avg_daily_volume_20");
-            StockDailyTransactionCost row;
-            while (in.read_row(row.commission_rate, row.stamp_duty_rate, row.transfer_fee_rate,
-                row.slippage_rate, row.market_impact_coeff, row.avg_daily_volume_20)) {
-                result.emplace_back(row);
-            }
-        }
-        catch (const std::exception& e) {
-            LOG_ERROR("读取StockDailyTransactionCost CSV失败: {}", e.what());
-        }
-        return result;
-    }
 }

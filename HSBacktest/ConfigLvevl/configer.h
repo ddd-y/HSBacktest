@@ -1,23 +1,21 @@
 #pragma once
-class Configer
-{
-private:
-	DataLevelConfiger data_level_configer;
-	static Configer configer_instance;
-public:
-	static DataLevelConfiger& GetDataLevelConfiger() { return configer_instance.data_level_configer; }
-};
 
 class DataLevelConfiger 
 {
 public:
-    int GetChangeDuration();
+    int GetChangeDuration() { return 20; } // 先返回默认值20
+    
+    // 因子有效性获取函数
+    bool GetMomentum20Enabled() { return true; }
+    bool GetTurnover20Enabled() { return true; }
+    bool GetVolatility20Enabled() { return true; }
+    bool GetLogMcapEnabled() { return true; }
+    bool GetEpRatioEnabled() { return true; }
 };
 
 //暂时用不到，后边再说
 struct StrategyConfiger
-{
-};
+{};
 
 struct TransactionCostConfiger
 {
@@ -28,3 +26,14 @@ struct TransactionCostConfiger
     double market_impact_coeff = 0.0;    // 市场冲击系数 | 大额交易冲击成本
     double avg_daily_volume_20 = 0.0;    // 20日日均成交量 | 用于冲击成本计算
 };
+
+class Configer
+{
+private:
+	DataLevelConfiger data_level_configer;
+	static Configer configer_instance;
+    //static TransactionCostConfiger transaction_configer_instance;
+public:
+	static DataLevelConfiger& GetDataLevelConfiger() { return configer_instance.data_level_configer; }
+};
+
