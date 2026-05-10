@@ -273,8 +273,9 @@ void dataleveltest()
     std::vector<std::string> stock_files = { "test_22days" };
 
     std::cout << "初始化GlobalData..." << std::endl;
-    GlobalData global_data(stock_files);
+    GlobalData::Init(stock_files);
 
+    GlobalData& global_data = *GlobalData::GetGlobalData();
     std::cout << "加载了 " << global_data.get_stock_count() << " 只股票" << std::endl;
 
     if (global_data.get_stock_count() == 0) {
@@ -291,7 +292,7 @@ void dataleveltest()
 
     // 4. 验证基本数据
     const auto& daily_datas = stock_data->get_daily_datas();
-    const auto& rebalance_index = stock_data->get_rebalance_index();
+    const auto& rebalance_index = global_data.get_rebalance_index();
 
     std::cout << "股票数据天数: " << daily_datas.size() << std::endl;
     std::cout << "调仓日数量: " << rebalance_index.size() << std::endl;

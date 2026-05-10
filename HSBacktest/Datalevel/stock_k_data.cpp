@@ -9,10 +9,4 @@ StockKData::StockKData(const std::string& code) :stock_code(code)
 	extended_datas = std::move(csvreader::read_stock_daily_extended_data(code + "_daily_extended.csv"));
 	financial_datas = std::move(csvreader::read_stock_daily_financial_data(code + "_daily_financial.csv"));
 
-	const int changeduration = Configer::GetDataLevelConfiger().GetChangeDuration();
-
-	for (int i = PRE_EXTRA_DAYS; i < daily_datas.size(); i += changeduration)
-	{
-		rebalance_index.push_back(i);
-	}
 }

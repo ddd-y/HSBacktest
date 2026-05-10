@@ -39,7 +39,7 @@ public:
 	volatility_20* get_volatility_20_calculator() const { return volatility_20_calculator; }
 	turnover_20* get_turnover_20_calculator() const { return turnover_20_calculator; }
 
-    FactorBase(FactorDatabase& database, const std::array<bool, FACTOR_NUM>& is_valid);
+    FactorBase(FactorDatabase& database);
 
 	void update_factors(const std::vector<StockDailyData>& daily_datas,const std::vector<StockDailyExtendedData>& extended_datas, 
         const std::vector<StockDailyFinancialData>& financial_datas, const std::vector<int>& rebalance_index);
