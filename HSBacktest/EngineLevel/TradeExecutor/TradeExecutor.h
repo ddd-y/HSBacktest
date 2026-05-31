@@ -50,13 +50,12 @@ class TradeDataManager {
 	friend class TradeExecutor;
 private:
 	// ===== 账户核心状态 =====
-	int current_position_count = 0;        // 当前持仓股票数量
 	double available_capital = 0.0;        // 可用资金
 	double total_net_value = 0.0;          // 总净值（市值 + 现金）
 	double initial_capital = 0.0;          // 初始资金（用于收益率计算）
 
 	// ===== 持仓与记录 =====
-	std::vector<PositionRecord> positions;              // 当前持仓列表（按stock_index索引）
+	std::vector<PositionRecord> positions;              // 当前持仓列表
 	std::vector<TradeRecord> trade_history;             // 交易历史
 	std::vector<NetValueSnapshot> nav_history;          // 净值历史（逐日）
 
@@ -68,7 +67,7 @@ public:
 	double GetTotalNetValue() const { return total_net_value; }
 	double GetInitialCapital() const { return initial_capital; }
 	double GetTotalReturn() const;
-	int GetPositionCount() const { return current_position_count; }
+	int GetPositionCount() const { return static_cast<int>(positions.size()); }
 
 	// 查询某只股票是否在持仓中
 	bool IsHolding(int stock_index) const;
@@ -109,10 +108,15 @@ private:
 		bool passed = true;
 		std::string reason;
 	};
-	RiskCheckResult CheckPositionLimit(int stock_index, double target_notional, double total_net_value) const;
-	RiskCheckResult CheckDailyLoss(double current_nav, double yesterday_nav) const;
 	RiskCheckResult CheckStopLoss(const PositionRecord& pos, double current_price) const;
 	RiskCheckResult CheckTakeProfit(const PositionRecord& pos, double current_price) const;
+
+	// 辅助：重新计算总净值 = 现金 + 所有持仓市值
+	void RecalcNetValue();
+
+	// 辅助：记录一笔交易到 trade_history
+	void RecordTrade(int trade_date, int stock_index, bool is_buy, int shares, double price,
+		const TransactionCostResult& cost);
 
 public:
 	explicit TradeExecutor(double init_capital = 1000000.0);
@@ -139,6 +143,15 @@ public:
 
 	// 记录当日净值快照
 	void RecordDailySnapshot(int trade_date);
+
+	// 处理公司行为（分红、拆股），更新持仓和可用资金
+	// @param stock_index 股票索引
+	// @param date_abs_idx 在 GlobalData dates 中的绝对索引
+	void ProcessCorporateActions(int stock_index, int date_abs_idx);
+
+	// 批量处理所有持仓的公司行为
+	// @param date_abs_idx 在 GlobalData dates 中的绝对索引
+	void ProcessAllCorporateActions(int date_abs_idx);
 
 	// 检查所有持仓是否需要止损/止盈
 	void CheckAllStopLossTakeProfit(const std::vector<double>& current_prices, int trade_date);

@@ -14,7 +14,7 @@ add_executable (HSBacktest "HSBacktest.cpp" "HSBacktest.h" "Datalevel/data_defs.
 	"EngineLevel/StockSelector/StockSelector.cpp" "EngineLevel/BacktestEngine.h" "EngineLevel/BacktestEngine.cpp" 
 	"Datalevel/param_builder/param_builder.h" "Datalevel/param_builder/param_builder.cpp" "ParaLevel/multi_thread/multi_runner.h" "ParaLevel/multi_thread/multi_runner.cpp" 
 	"CollectorLevel/performance_collector.h" "CollectorLevel/performance_collector.cpp" "CollectorLevel/BacktestSummary.h" "ParaLevel/multi_host/multi_host.h" "ParaLevel/multi_host/multi_host.cpp"
-	"test/full_pipeline_test.h")
+	"test/full_pipeline_test.h" "test/multithread_test.h")
 
 if (CMAKE_VERSION VERSION_GREATER 3.12)
   set_property(TARGET HSBacktest PROPERTY CXX_STANDARD 20)

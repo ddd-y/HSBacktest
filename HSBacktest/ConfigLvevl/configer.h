@@ -127,9 +127,6 @@ class StrategyConfiger
 
     // ===== 完整风控规则 =====
     double single_position_limit = 0.02;  // 单票仓位上限
-    double industry_position_limit = 0.2; // 单行业仓位上限
-    double total_position_limit = 1.0;    // 总仓位上限（1.0=满仓）
-    double daily_max_loss = 0.05;         // 单日最大亏损止损（5%）
     double single_stock_stop_loss = 0.1;  // 单只股票止损比例（10%）
     double single_stock_take_profit = 0.3; // 单只股票止盈比例（30%）
 
@@ -150,9 +147,6 @@ public:
     bool GetAutoNormalizeWeights() const { return auto_normalize_weights; }
      // 风控规则的Getter
     double GetSinglePositionLimit() const { return single_position_limit; }
-    double GetIndustryPositionLimit() const { return industry_position_limit; }
-    double GetTotalPositionLimit() const { return total_position_limit; }
-    double GetDailyMaxLoss() const { return daily_max_loss; }
     double GetSingleStockStopLoss() const { return single_stock_stop_loss; }
     double GetSingleStockTakeProfit() const { return single_stock_take_profit; }
     // 收益计算参数的Getter

@@ -87,4 +87,7 @@ private:
 
 	// 计算最大回撤
 	double CalculateMaxDrawdown(const std::vector<NetValueSnapshot>& nav_history) const;
+
+	// 逐日推进：处理公司行为 → 更新市值 → 止损止盈 → 记录快照
+	void ProcessDailyLoop(int from_idx, int to_idx);
 };
