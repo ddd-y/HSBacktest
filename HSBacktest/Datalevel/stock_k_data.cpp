@@ -8,5 +8,10 @@ StockKData::StockKData(const std::string& code) :stock_code(code)
 	daily_datas = std::move(csvreader::read_stock_daily_data(code + "_daily.csv"));
 	extended_datas = std::move(csvreader::read_stock_daily_extended_data(code + "_daily_extended.csv"));
 	financial_datas = std::move(csvreader::read_stock_daily_financial_data(code + "_daily_financial.csv"));
+	resolve_industry_code();
+}
 
+inline void StockKData::resolve_industry_code()
+{
+	industry_code = daily_datas[0].industry_code;
 }

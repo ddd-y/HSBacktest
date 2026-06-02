@@ -18,6 +18,7 @@ struct alignas(CACHE_LINE_SIZE) StockDailyData {
     double close = 0.0;                   // 当日收盘价 | 原始价格（未复权）
     double open = 0.0;                    // 当日开盘价 | 原始价格（未复权）
     double adj_factor = 1.0;              // 复权因子 | 用于计算前复权/后复权价格
+    int32_t industry_code = 0;           // 行业代码 | 如申万一级行业代码，0=未分类
     int is_suspended = 0;                // 停牌状态 | 0=正常交易 1=全天停牌
     int is_delisted = 0;                 // 退市状态 | 0=正常上市 1=已退市
     int is_limit_up = 0;                 // 涨停状态 | 0=未涨停 1=涨停

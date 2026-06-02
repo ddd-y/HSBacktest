@@ -39,12 +39,12 @@ void generate_multithread_test_csv(int num_stocks = 3, int num_days = 42) {
         // 主日线
         {
             std::ofstream ofs(base + "_daily.csv");
-            ofs << "trade_date,close,open,adj_factor,is_suspended,is_delisted,is_limit_up,is_limit_down" << std::endl;
+            ofs << "trade_date,close,open,adj_factor,industry_code,is_suspended,is_delisted,is_limit_up,is_limit_down" << std::endl;
             double price = 100.0 + s * 10.0;
             for (int i = 0; i < num_days; ++i) {
                 ofs << (20250101 + i) << ","
                     << std::fixed << std::setprecision(2) << price << ","
-                    << (price - 0.5) << ",1.0,0,0,0,0" << std::endl;
+                    << (price - 0.5) << ",1.0," << ((s + 1) * 10 + i % 3) << ",0,0,0,0" << std::endl;
                 price += (i % 7 == 0 ? -1.5 : 0.8 + s * 0.1);
             }
         }

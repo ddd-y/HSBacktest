@@ -35,12 +35,12 @@ void generate_fulltest_csv() {
     // 主日线数据
     {
         std::ofstream ofs("fulltest_daily.csv");
-        ofs << "trade_date,close,open,adj_factor,is_suspended,is_delisted,is_limit_up,is_limit_down" << std::endl;
+        ofs << "trade_date,close,open,adj_factor,industry_code,is_suspended,is_delisted,is_limit_up,is_limit_down" << std::endl;
         double price = 100.0;
         for (int i = 0; i < 22; ++i) {
             ofs << (20250101 + i) << ","
                 << std::fixed << std::setprecision(2) << price << ","
-                << (price - 0.5) << ",1.0,0,0,0,0" << std::endl;
+                << (price - 0.5) << ",1.0," << ((i % 5 == 0) ? 1 : 2) << ",0,0,0,0" << std::endl;
             price += (i % 5 == 0 ? -2.0 : 1.0);
         }
     }

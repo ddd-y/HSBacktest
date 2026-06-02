@@ -113,6 +113,7 @@ class StrategyConfiger
     //暂时不支持调仓方式可选
     // std::string RebalanceType = "FIXED_INTERVAL"; // 调仓方式：FIXED_INTERVAL(固定间隔)/MONTH_START(月初)
     int top_n = 50;                      // 选股数量
+    int min_stocks_per_industry = 1;      // 每个行业最少选股数（行业中性化选股）
 	//暂时不支持加仓权方式可选
     // std::string WeightingMethod = "EQUAL_WEIGHT"; // 持仓加权方式：EQUAL_WEIGHT(等权)/MARKET_CAP_WEIGHT(市值加权)
 
@@ -127,6 +128,7 @@ class StrategyConfiger
 
     // ===== 完整风控规则 =====
     double single_position_limit = 0.02;  // 单票仓位上限
+    double industry_position_limit = 0.2; // 单行业仓位上限
     double single_stock_stop_loss = 0.1;  // 单只股票止损比例（10%）
     double single_stock_take_profit = 0.3; // 单只股票止盈比例（30%）
 
@@ -138,6 +140,7 @@ public:
     //std::string GetRebalanceType() { return RebalanceType; }
     int GetTopN() const { return top_n; }
     //std::string GetWeightingMethod() { return WeightingMethod; }
+    int GetMinStocksPerIndustry() const { return min_stocks_per_industry; }
     // 因子权重Getter\r
     double GetMomentumWeight() const { return momentum_weight; }
     double GetTurnoverWeight() const { return turnover_weight; }
@@ -147,6 +150,7 @@ public:
     bool GetAutoNormalizeWeights() const { return auto_normalize_weights; }
      // 风控规则的Getter
     double GetSinglePositionLimit() const { return single_position_limit; }
+    double GetIndustryPositionLimit() const { return industry_position_limit; }
     double GetSingleStockStopLoss() const { return single_stock_stop_loss; }
     double GetSingleStockTakeProfit() const { return single_stock_take_profit; }
     // 收益计算参数的Getter

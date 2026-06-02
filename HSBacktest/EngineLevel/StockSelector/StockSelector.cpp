@@ -8,6 +8,8 @@
 #include <cmath>
 #include <limits>
 #include <numeric>
+#include <map>
+#include <set>
 
 void StockSelector::CrossSectionalNormalize(std::vector<double>& values, const std::vector<bool>* tradable_mask) const
 {
@@ -172,10 +174,90 @@ std::vector<int> StockSelector::SelectTopN(const std::vector<StockScoreRecord>& 
 	return selected;
 }
 
+std::vector<int> StockSelector::SelectIndustryNeutral(
+	const std::vector<StockScoreRecord>& scores,
+	int total_target,
+	int min_per_industry) const
+{
+	if (scores.empty() || total_target <= 0) return {};
+
+	GlobalData* gd = GlobalData::GetGlobalData();
+	if (!gd) return SelectTopN(scores, total_target);  // fallback
+
+	// 1. 按行业分组，每组内按得分降序排列
+	std::map<int32_t, std::vector<StockScoreRecord>> industry_groups;
+	for (const auto& rec : scores) {
+		StockKData* skd = gd->get_stock_k_data(rec.stock_index);
+		int32_t ind_code = skd ? skd->GetIndustryCode() : 0;
+		if (ind_code == 0) ind_code = -1;  // 未分类归为一组
+		industry_groups[ind_code].push_back(rec);
+	}
+
+	int num_industries = static_cast<int>(industry_groups.size());
+	if (num_industries <= 1) {
+		// 只有一个行业或没有行业数据，回退到全局排名
+		LOG_INFO("StockSelector::SelectIndustryNeutral - only {} industry group(s), fallback to global ranking", num_industries);
+		return SelectTopN(scores, total_target);
+	}
+
+	// 2. 每个行业内部排序
+	for (auto& [ind, stocks] : industry_groups) {
+		std::sort(stocks.begin(), stocks.end(),
+			[](const StockScoreRecord& a, const StockScoreRecord& b) {
+				return a.composite_score > b.composite_score;
+			});
+	}
+
+	// 3. 第一轮：每个行业先取 min_per_industry 只
+	std::set<int> selected_set;        // 去重
+	std::map<int32_t, int> industry_pick_count;  // 每个行业已选数量
+
+	for (auto& [ind, stocks] : industry_groups) {
+		int take = std::min(min_per_industry, static_cast<int>(stocks.size()));
+		for (int i = 0; i < take; ++i) {
+			selected_set.insert(stocks[i].stock_index);
+		}
+		industry_pick_count[ind] = take;
+	}
+
+	// 4. 第二轮：剩余名额按全局得分补足
+	int remaining = total_target - static_cast<int>(selected_set.size());
+	if (remaining > 0) {
+		// 所有已选的跳过，未选的按全局得分排序
+		std::vector<StockScoreRecord> remaining_candidates;
+		for (const auto& rec : scores) {
+			if (selected_set.count(rec.stock_index) == 0) {
+				remaining_candidates.push_back(rec);
+			}
+		}
+		std::sort(remaining_candidates.begin(), remaining_candidates.end(),
+			[](const StockScoreRecord& a, const StockScoreRecord& b) {
+				return a.composite_score > b.composite_score;
+			});
+
+		int take = std::min(remaining, static_cast<int>(remaining_candidates.size()));
+		for (int i = 0; i < take; ++i) {
+			selected_set.insert(remaining_candidates[i].stock_index);
+		}
+	}
+
+	std::vector<int> result(selected_set.begin(), selected_set.end());
+
+	// 日志：输出每个行业的选股数
+	std::string industry_log;
+	for (auto& [ind, count] : industry_pick_count) {
+		industry_log += "ind=" + std::to_string(ind) + ":" + std::to_string(count) + " ";
+	}
+	LOG_INFO("StockSelector::SelectIndustryNeutral - {} industries, selected {} stocks (target={}, min_per_ind={}) | {}",
+		num_industries, result.size(), total_target, min_per_industry, industry_log);
+
+	return result;
+}
+
 std::vector<int> StockSelector::ScoreAndSelect(int rebalance_idx, int* actual_selected) const
 {
 	GlobalData* gd = GlobalData::GetGlobalData();
-	int top_n = gd ? gd->GetTopN(adjustParamIndex) : 50;
+	int top_n = gd->GetTopN(adjustParamIndex);
 
 	std::vector<StockScoreRecord> scores = ScoreAllStocks(rebalance_idx);
 
@@ -193,5 +275,6 @@ std::vector<int> StockSelector::ScoreAndSelect(int rebalance_idx, int* actual_se
 			static_cast<int>(scores.size()), top_n, effective_top_n);
 	}
 
-	return SelectTopN(scores, effective_top_n);
+	return SelectIndustryNeutral(scores, effective_top_n,
+		Configer::GetStrategyConfiger().GetMinStocksPerIndustry());
 }

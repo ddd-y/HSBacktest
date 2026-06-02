@@ -422,6 +422,9 @@ void TradeExecutor::Rebalance(const std::vector<int>& target_indices,
 
 	const auto& strategy_cfg = Configer::GetStrategyConfiger();
 	double single_limit_nv = data_manager.total_net_value * strategy_cfg.GetSinglePositionLimit();
+	double industry_limit_nv = data_manager.total_net_value * strategy_cfg.GetIndustryPositionLimit();
+
+	GlobalData* gd = GlobalData::GetGlobalData();
 
 	for (int idx : target_indices) {
 		if (idx < 0 || idx >= static_cast<int>(prices.size())) continue;
@@ -437,6 +440,34 @@ void TradeExecutor::Rebalance(const std::vector<int>& target_indices,
 
 		// 单票仓位上限检查
 		double allowed_notional = std::min(remaining_budget, single_limit_nv - existing_value);
+		if (allowed_notional <= 0.0) continue;
+
+		// 行业仓位上限检查
+		if (gd) {
+			StockKData* skd = gd->get_stock_k_data(idx);
+			if (skd) {
+				int32_t ind_code = skd->GetIndustryCode();
+				if (ind_code != 0) {
+					// 统计该行业在所有持仓中的已有市值
+					double industry_existing = 0.0;
+					for (const auto& pos : data_manager.positions) {
+						if (pos.shares <= 0) continue;
+						StockKData* pos_skd = gd->get_stock_k_data(pos.stock_index);
+						if (pos_skd && pos_skd->GetIndustryCode() == ind_code) {
+							industry_existing += pos.current_value;
+						}
+					}
+					// 当前股票如果已持有，不减自己的市值（上面 allowed_notional 已包含）
+					double industry_budget = industry_limit_nv - industry_existing + existing_value;
+					if (industry_budget <= 0.0) {
+						LOG_WARN("TradeExecutor::Rebalance - industry limit reached for stock_idx={} industry={}", idx, ind_code);
+						continue;
+					}
+					allowed_notional = std::min(allowed_notional, industry_budget);
+				}
+			}
+		}
+
 		if (allowed_notional <= 0.0) continue;
 
 		int target_shares = static_cast<int>(allowed_notional / price);

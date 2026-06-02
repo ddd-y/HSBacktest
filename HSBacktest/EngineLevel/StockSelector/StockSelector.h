@@ -41,6 +41,14 @@ public:
 	// 选择Top N股票（最多返回 top_n 个，若可选股票不足则返回全部）
 	std::vector<int> SelectTopN(const std::vector<StockScoreRecord>& scores, int top_n) const;
 
+	// 行业中性化选股：每个行业内部独立排名取TopK，保证行业覆盖
+	// @param scores 所有可交易股票的评分（按stock_index排序）
+	// @param total_target 总目标选股数
+	// @param min_per_industry 每个行业最少选股数
+	// @return 选中股票的stock_index列表
+	std::vector<int> SelectIndustryNeutral(const std::vector<StockScoreRecord>& scores,
+		int total_target, int min_per_industry) const;
+
 	// 一站式接口：评分+选股一步完成
 	// top_n 和 weights 都通过 adjustParamIndex 从 GlobalData 获取
 	// @param rebalance_idx 当前调仓日索引

@@ -31,6 +31,7 @@ void generate_test_data(std::vector<StockDailyData>& daily_datas,
         daily.close = price;
         daily.open = price - 0.5;
         daily.adj_factor = 1.0;
+        daily.industry_code = (i % 5 == 0) ? 1 : 2;  // 两个行业交替
         daily.is_suspended = 0;
         daily.is_delisted = 0;
         daily.is_limit_up = 0;
@@ -168,7 +169,7 @@ void generate_test_csv_file() {
     }
 
     // 写入CSV头部
-    daily_ofs << "trade_date,close,open,adj_factor,is_suspended,is_delisted,is_limit_up,is_limit_down" << std::endl;
+    daily_ofs << "trade_date,close,open,adj_factor,industry_code,is_suspended,is_delisted,is_limit_up,is_limit_down" << std::endl;
 
     // 生成22个交易日的数据
     double price = 100.0;
@@ -182,7 +183,7 @@ void generate_test_csv_file() {
         daily_ofs << trade_date << ","
             << std::fixed << std::setprecision(2) << close_price << ","
             << open_price << ","
-            << "1.0,0,0,0,0" << std::endl;
+            << "1.0,0,0,0,0,0" << std::endl;  // adj_factor, industry_code, is_suspended, is_delisted, is_limit_up, is_limit_down
 
         price += 1.0;
     }

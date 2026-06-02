@@ -11,12 +11,12 @@ namespace csvreader {
     inline std::vector<StockDailyData> read_stock_daily_data(const std::string& filename) {
         std::vector<StockDailyData> result;
         try {
-            io::CSVReader<8> in(filename);
+            io::CSVReader<9> in(filename);
             in.read_header(io::ignore_extra_column,
-                "trade_date", "close", "open", "adj_factor",
+                "trade_date", "close", "open", "adj_factor", "industry_code",
                 "is_suspended", "is_delisted", "is_limit_up", "is_limit_down");
             StockDailyData row;
-            while (in.read_row(row.trade_date, row.close, row.open, row.adj_factor,
+            while (in.read_row(row.trade_date, row.close, row.open, row.adj_factor, row.industry_code,
                 row.is_suspended, row.is_delisted, row.is_limit_up, row.is_limit_down)) {
                 result.emplace_back(row);
             }
