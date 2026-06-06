@@ -20,23 +20,23 @@ class StockSelector;
 class BacktestEngine {
 private:
 	// ===== 核心组件（拥有） =====
-	TradeExecutor* trade_executor = nullptr;
-	StockSelector* stock_selector = nullptr;
+	std::unique_ptr<TradeExecutor> trade_executor;
+	std::unique_ptr<StockSelector> stock_selector;
 
 	// ===== 回测状态 =====
 	bool is_initialized = false;
-	int current_date_idx = 0;               // 当前在daily_data中的索引
-	int current_rebalance_idx = 0;          // 当前第几个调仓日（rebalance_index中的位置）
 	double initial_capital = 1000000.0;
 
-	// ===== 运行控制参数（来自StrategyConfiger）=====
-	int hold_days = 20;
 
 	//并行跑多个参数的回测时，对应的调整参数数组索引（同时用于权重和top_n）
 	int adjustParamIndex = 0;
 public:
 	BacktestEngine();
 	~BacktestEngine();
+
+	// 禁止拷贝（Rule of Three：持有 unique_ptr 资源）
+	BacktestEngine(const BacktestEngine&) = delete;
+	BacktestEngine& operator=(const BacktestEngine&) = delete;
 
 	// ===== 初始化 =====
 	// @param init_capital 初始资金
@@ -54,13 +54,9 @@ public:
 	// 执行完整的回测循环
 	void Run();
 
-	// 单步执行一次调仓（用于调试/分步运行）
-	// @return true=还有更多调仓日, false=回测结束
-	bool StepRebalance();
-
 	// ===== 结果查询 =====
 	BacktestSummary GetSummary() const { return summary; }
-	const TradeExecutor* GetTradeExecutor() const { return trade_executor; }
+	const TradeExecutor* GetTradeExecutor() const { return trade_executor.get(); }
 
 	// ===== 绩效报告 =====
 	// 计算绩效指标
@@ -78,9 +74,6 @@ public:
 private:
 	// ===== 内部辅助 =====
 	BacktestSummary summary;
-
-	// 获取当前调仓日在daily_data中的绝对索引
-	int GetCurrentDateAbsoluteIndex() const;
 
 	// 获取所有股票在指定日期的收盘价
 	std::vector<double> GetAllStockClosePrices(int date_absolute_idx) const;

@@ -24,6 +24,11 @@ public:
     static void BuildParamNet(std::vector<AdjustParam>& adjustParams,
                               int randomSamples = 1000);
 
+    // 常量
+    static constexpr int MAX_ZERO_WEIGHT_RETRIES = 100;  // 拒绝零权重时的最大重试次数
+    static constexpr int MAX_RANGE_RETRIES = 200;        // Dirichlet 归一化后范围约束重试上限
+    static constexpr int GRID_EXPLOSION_WARN = 100000;   // 网格组合数超过此值时打 WARN
+
 private:
     //各搜索模式实现
     static void BuildGrid(std::vector<AdjustParam>& out, const ParamSearchConfiger& cfg);
@@ -39,7 +44,7 @@ private:
     //归一化权重数组
     static void NormalizeWeights(std::array<double, FACTOR_NUM>& weights);
 
-    //Dirichlet分布采样（用于随机模式）
+    //Dirichlet分布采样（用于随机模式）。normalize=true 时保证最终归一化后仍在[min,max]范围内
     static std::array<double, FACTOR_NUM> SampleDirichlet(
-        std::mt19937& rng, const ParamSearchConfiger& cfg);
+        std::mt19937& rng, const ParamSearchConfiger& cfg, bool normalize);
 };

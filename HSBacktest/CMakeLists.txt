@@ -14,7 +14,7 @@ add_executable (HSBacktest "HSBacktest.cpp" "HSBacktest.h" "Datalevel/data_defs.
 	"EngineLevel/StockSelector/StockSelector.cpp" "EngineLevel/BacktestEngine.h" "EngineLevel/BacktestEngine.cpp" 
 	"Datalevel/param_builder/param_builder.h" "Datalevel/param_builder/param_builder.cpp" "ParaLevel/multi_thread/multi_runner.h" "ParaLevel/multi_thread/multi_runner.cpp" 
 	"CollectorLevel/performance_collector.h" "CollectorLevel/performance_collector.cpp" "CollectorLevel/BacktestSummary.h" "ParaLevel/multi_host/multi_host.h" "ParaLevel/multi_host/multi_host.cpp"
-	"test/full_pipeline_test.h" "test/multithread_test.h")
+	"test/full_pipeline_test.h" "test/multithread_test.h" "test/functional_test.h" "test/multi_host_e2e_test.h")
 
 if (CMAKE_VERSION VERSION_GREATER 3.12)
   set_property(TARGET HSBacktest PROPERTY CXX_STANDARD 20)
@@ -23,6 +23,7 @@ endif()
 find_package(spdlog REQUIRED)
 find_package(fmt REQUIRED)
 find_package(OpenMP REQUIRED)
-target_link_libraries(HSBacktest PUBLIC fmt::fmt spdlog::spdlog OpenMP::OpenMP_CXX)
+find_package(MPI REQUIRED)
+target_link_libraries(HSBacktest PUBLIC fmt::fmt spdlog::spdlog OpenMP::OpenMP_CXX MPI::MPI_CXX)
 target_link_directories(HSBacktest PUBLIC ${CMAKE_SOURCE_DIR}/lib)
 # TODO: 如有需要，请添加测试并安装目标。

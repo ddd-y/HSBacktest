@@ -200,6 +200,15 @@ std::vector<int> StockSelector::SelectIndustryNeutral(
 		return SelectTopN(scores, total_target);
 	}
 
+	// 校验：min_per_industry × 行业数 不能超过 total_target
+	int effective_min = min_per_industry;
+	if (min_per_industry * num_industries > total_target) {
+		effective_min = total_target / num_industries;
+		LOG_WARN("StockSelector::SelectIndustryNeutral - min_per_industry({}) x industries({}) = {} > top_n({}), "
+		         "capped to {}", min_per_industry, num_industries,
+		         min_per_industry * num_industries, total_target, effective_min);
+	}
+
 	// 2. 每个行业内部排序
 	for (auto& [ind, stocks] : industry_groups) {
 		std::sort(stocks.begin(), stocks.end(),
@@ -208,12 +217,12 @@ std::vector<int> StockSelector::SelectIndustryNeutral(
 			});
 	}
 
-	// 3. 第一轮：每个行业先取 min_per_industry 只
+	// 3. 第一轮：每个行业先取 effective_min 只
 	std::set<int> selected_set;        // 去重
 	std::map<int32_t, int> industry_pick_count;  // 每个行业已选数量
 
 	for (auto& [ind, stocks] : industry_groups) {
-		int take = std::min(min_per_industry, static_cast<int>(stocks.size()));
+		int take = std::min(effective_min, static_cast<int>(stocks.size()));
 		for (int i = 0; i < take; ++i) {
 			selected_set.insert(stocks[i].stock_index);
 		}
@@ -249,7 +258,7 @@ std::vector<int> StockSelector::SelectIndustryNeutral(
 		industry_log += "ind=" + std::to_string(ind) + ":" + std::to_string(count) + " ";
 	}
 	LOG_INFO("StockSelector::SelectIndustryNeutral - {} industries, selected {} stocks (target={}, min_per_ind={}) | {}",
-		num_industries, result.size(), total_target, min_per_industry, industry_log);
+		num_industries, result.size(), total_target, effective_min, industry_log);
 
 	return result;
 }

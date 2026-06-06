@@ -12,19 +12,9 @@
 #include <fstream>
 #include <iomanip>
 
-BacktestEngine::BacktestEngine()
-	: trade_executor(nullptr)
-	, stock_selector(nullptr)
-{
-}
+BacktestEngine::BacktestEngine() = default;
 
-BacktestEngine::~BacktestEngine()
-{
-	delete trade_executor;
-	trade_executor = nullptr;
-	delete stock_selector;
-	stock_selector = nullptr;
-}
+BacktestEngine::~BacktestEngine() = default;
 
 void BacktestEngine::Initialize(double init_capital, int adjust_param_index)
 {
@@ -32,20 +22,19 @@ void BacktestEngine::Initialize(double init_capital, int adjust_param_index)
 	initial_capital = init_capital;
 
 	// 创建核心组件
-	trade_executor = new TradeExecutor(init_capital);
-	stock_selector = new StockSelector(adjustParamIndex);
+	trade_executor = std::make_unique<TradeExecutor>(init_capital);
+	stock_selector = std::make_unique<StockSelector>(adjustParamIndex);
 
 	// 读取策略参数
 	const auto& strategy_cfg = Configer::GetStrategyConfiger();
-	hold_days = strategy_cfg.GetHoldDays();
 
 	// top_n 通过 adjustParamIndex 从 GlobalData 获取，不再从 StrategyConfiger 读取
 	int top_n = GlobalData::GetGlobalData() ? GlobalData::GetGlobalData()->GetTopN(adjustParamIndex) : strategy_cfg.GetTopN();
 
 	is_initialized = true;
 
-	LOG_INFO("BacktestEngine initialized | init_capital={:.2f} | hold_days={} | top_n={} | adjustParamIndex={}",
-		init_capital, hold_days, top_n, adjustParamIndex);
+	LOG_INFO("BacktestEngine initialized | init_capital={:.2f} |  top_n={} | adjustParamIndex={}",
+		init_capital, top_n, adjustParamIndex);
 }
 
 void BacktestEngine::ReInitialize(double init_capital, int adjust_param_index)
@@ -61,14 +50,12 @@ void BacktestEngine::ReInitialize(double init_capital, int adjust_param_index)
 
 	// 重置summary
 	summary	= BacktestSummary();
-
-	current_date_idx = 0;
-	current_rebalance_idx = 0;
+	summary.param_index = adjustParamIndex;
 
 	int top_n = GlobalData::GetGlobalData() ? GlobalData::GetGlobalData()->GetTopN(adjustParamIndex) : 50;
 
-	LOG_INFO("BacktestEngine reinitialized | init_capital={:.2f} | hold_days={} | top_n={} | adjustParamIndex={}",
-		init_capital, hold_days, top_n, adjustParamIndex);
+	LOG_INFO("BacktestEngine reinitialized | init_capital={:.2f} | top_n={} | adjustParamIndex={}",
+		init_capital, top_n, adjustParamIndex);
 }
 
 
@@ -98,13 +85,9 @@ void BacktestEngine::Run()
 	LOG_INFO("BacktestEngine::Run - starting backtest with {} stocks, {} rebalance periods",
 		stock_count, rebalance_indices.size());
 
-	// 创建第一个调仓日的净值快照
-	trade_executor->RecordDailySnapshot(gd->get_dates()[rebalance_indices[0]]);
-
 	// === 主循环：遍历每个调仓日 ===
 	for (int rb_idx = 0; rb_idx < static_cast<int>(rebalance_indices.size()); ++rb_idx) {
 		int date_abs_idx = rebalance_indices[rb_idx];
-		current_rebalance_idx = rb_idx;
 
 		// 调仓日当天先处理公司行为（分红/拆股），确保持仓状态正确
 		trade_executor->ProcessAllCorporateActions(date_abs_idx);
@@ -115,34 +98,34 @@ void BacktestEngine::Run()
 		LOG_INFO("=== Rebalance #{} | date={} | date_idx={} ===",
 			rb_idx, trade_date, date_abs_idx);
 
+		// 选股 + 调仓（失败不影响逐日处理）
 		std::vector<int> selected_stocks;
 		try {
 			selected_stocks = stock_selector->ScoreAndSelect(rb_idx);
 		}
 		catch (const std::exception& e) {
 			LOG_ERROR("StockSelector failed at rebalance #{}: {}", rb_idx, e.what());
-			trade_executor->RecordDailySnapshot(trade_date);
-			continue;
 		}
 
-		if (selected_stocks.empty()) {
+		if (!selected_stocks.empty()) {
+			try {
+				trade_executor->Rebalance(selected_stocks, close_prices, trade_date);
+			}
+			catch (const std::exception& e) {
+				LOG_ERROR("TradeExecutor::Rebalance failed at rebalance #{}: {}", rb_idx, e.what());
+			}
+		}
+		else {
 			LOG_WARN("No stocks selected at rebalance #{}", rb_idx);
-			trade_executor->RecordDailySnapshot(trade_date);
-			continue;
 		}
 
-		try {
-			trade_executor->Rebalance(selected_stocks, close_prices, trade_date, initial_capital);
-		}
-		catch (const std::exception& e) {
-			LOG_ERROR("TradeExecutor::Rebalance failed at rebalance #{}: {}", rb_idx, e.what());
-			trade_executor->RecordDailySnapshot(trade_date);
-			continue;
-		}
+		// 记录调仓日净值快照（无论选股/调仓是否成功）
+		trade_executor->RecordDailySnapshot(trade_date);
 
+		// 无论调仓是否成功，必须处理逐日盯市
 		int next_date_abs_idx = (rb_idx + 1 < static_cast<int>(rebalance_indices.size()))
 			? rebalance_indices[rb_idx + 1]
-			: -1;
+			: static_cast<int>(gd->get_dates().size()-1);
 
 		if (next_date_abs_idx > date_abs_idx) {
 			ProcessDailyLoop(date_abs_idx + 1, next_date_abs_idx);
@@ -152,55 +135,19 @@ void BacktestEngine::Run()
 	const auto& dates = gd->get_dates();
 	int last_idx = static_cast<int>(dates.size()) - 1;
 	std::vector<double> final_prices = GetAllStockClosePrices(last_idx);
-	trade_executor->CloseAllPositions(
-		std::vector<int>(final_prices.size(), dates[last_idx]),
-		final_prices
-	);
+
+	// 最后一天逐日处理（公司行为 / 市值更新 / 止损止盈），清仓前必须做
+	trade_executor->ProcessAllCorporateActions(last_idx);
+	trade_executor->UpdateAllMarketValues(final_prices);
+	trade_executor->CheckAllStopLossTakeProfit(final_prices, dates[last_idx]);
+
+	trade_executor->CloseAllPositions(dates[last_idx], final_prices);
 	trade_executor->RecordDailySnapshot(dates[last_idx]);
 
 	CalculatePerformance();
 	PrintReport();
 
 	LOG_INFO("BacktestEngine::Run - backtest completed");
-}
-
-bool BacktestEngine::StepRebalance()
-{
-	GlobalData* gd = GlobalData::GetGlobalData();
-	if (!is_initialized || !gd) return false;
-
-	const auto& rebalance_indices = gd->get_rebalance_index();
-	if (current_rebalance_idx >= static_cast<int>(rebalance_indices.size())) return false;
-
-	int date_abs_idx = rebalance_indices[current_rebalance_idx];
-
-	// 调仓日当天先处理公司行为
-	trade_executor->ProcessAllCorporateActions(date_abs_idx);
-
-	std::vector<double> close_prices = GetAllStockClosePrices(date_abs_idx);
-	if (close_prices.empty()) {
-		current_rebalance_idx++;
-		return current_rebalance_idx < static_cast<int>(rebalance_indices.size());
-	}
-
-	const auto& dates = gd->get_dates();
-	int trade_date = dates[date_abs_idx];
-
-	std::vector<int> selected = stock_selector->ScoreAndSelect(current_rebalance_idx);
-	if (!selected.empty()) {
-		trade_executor->Rebalance(selected, close_prices, trade_date, initial_capital);
-	}
-
-	int next_date_abs_idx = (current_rebalance_idx + 1 < static_cast<int>(rebalance_indices.size()))
-		? rebalance_indices[current_rebalance_idx + 1]
-		: -1;
-
-	if (next_date_abs_idx > date_abs_idx) {
-		ProcessDailyLoop(date_abs_idx + 1, next_date_abs_idx);
-	}
-
-	current_rebalance_idx++;
-	return current_rebalance_idx < static_cast<int>(rebalance_indices.size());
 }
 
 void BacktestEngine::ProcessDailyLoop(int from_idx, int to_idx)
@@ -220,17 +167,6 @@ void BacktestEngine::ProcessDailyLoop(int from_idx, int to_idx)
 	}
 }
 
-int BacktestEngine::GetCurrentDateAbsoluteIndex() const
-{
-	GlobalData* gd = GlobalData::GetGlobalData();
-	if (!gd) return -1;
-	const auto& rebalance_indices = gd->get_rebalance_index();
-	if (current_rebalance_idx < static_cast<int>(rebalance_indices.size())) {
-		return rebalance_indices[current_rebalance_idx];
-	}
-	return -1;
-}
-
 std::vector<double> BacktestEngine::GetAllStockClosePrices(int date_absolute_idx) const
 {
 	GlobalData* gd = GlobalData::GetGlobalData();
@@ -245,7 +181,7 @@ std::vector<double> BacktestEngine::GetAllStockClosePrices(int date_absolute_idx
 
 		const auto& daily_datas = stock_data->get_daily_datas();
 		if (date_absolute_idx >= 0 && date_absolute_idx < static_cast<int>(daily_datas.size())) {
-			prices[i] = daily_datas[date_absolute_idx].close * daily_datas[date_absolute_idx].adj_factor;
+			prices[i] = daily_datas[date_absolute_idx].close;
 		}
 	}
 
@@ -277,14 +213,15 @@ void BacktestEngine::CalculatePerformance()
 	const auto& nav_history = trade_executor->GetDataManager().GetNavHistory();
 	if (nav_history.empty()) return;
 
-	// 基础数据
-	summary.final_net_value = nav_history.back().total_net_value;
+	// 基础数据（最终净值从 TradeExecutor 实时读取，反映清仓后的真实状态）
+	summary.final_net_value = trade_executor->GetDataManager().GetTotalNetValue();
 	summary.total_return = (summary.final_net_value - initial_capital) / initial_capital;
 	summary.total_trade_days = static_cast<int>(nav_history.size());
 
 	// 计算年化收益率 (交易日=252)
+	// 仅在回撤未超过本金（total_return > -1.0）时年化，否则直接用累计收益
 	double years = static_cast<double>(summary.total_trade_days) / ANNUAL_TRADE_DAYS;
-	if (years > 0.0) {
+	if (years > 0.0 && summary.total_return > -1.0) {
 		summary.annual_return = std::pow(1.0 + summary.total_return, 1.0 / years) - 1.0;
 	}
 	else {
@@ -329,6 +266,13 @@ void BacktestEngine::CalculatePerformance()
 
 	// 最大回撤
 	summary.max_drawdown = CalculateMaxDrawdown(nav_history);
+
+	// 平均换手率
+	const auto& turnover_rates = trade_executor->GetDataManager().GetTurnoverRates();
+	if (!turnover_rates.empty()) {
+		summary.avg_turnover = std::accumulate(turnover_rates.begin(), turnover_rates.end(), 0.0)
+			/ turnover_rates.size();
+	}
 }
 
 void BacktestEngine::PrintReport() const
@@ -346,6 +290,7 @@ void BacktestEngine::PrintReport() const
 	LOG_INFO("Win Rate:            {:>12.4f}%", summary.win_rate * 100.0);
 	LOG_INFO("Total Trade Days:    {:>12d}", summary.total_trade_days);
 	LOG_INFO("Total Rebalances:    {:>12d}", summary.total_rebalances);
+	LOG_INFO("Avg Turnover:        {:>12.4f}%", summary.avg_turnover * 100.0);
 	LOG_INFO("========================================");
 
 }

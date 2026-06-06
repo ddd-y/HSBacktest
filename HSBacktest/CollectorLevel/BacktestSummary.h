@@ -11,6 +11,7 @@ struct BacktestSummary {
 	double avg_turnover = 0.0;           // 平均换手率
 	double final_net_value = 0.0;        // 最终净值
 	double initial_capital = 0.0;        // 初始资金
+	int param_index = 0;                 // 对应的 adjust_params 索引
 	BacktestSummary() = default;
 	BacktestSummary(const BacktestSummary&) = default;
 };

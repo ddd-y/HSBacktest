@@ -6,8 +6,10 @@
 inline double log_mcap::calculate_log_mcap(const std::vector<StockDailyData>& daily_datas, const std::vector<StockDailyFinancialData>& financial_datas, const int date_index) const
 {
 	double total_shares = financial_datas[date_index-1].total_shares;
-	double close_price = daily_datas[date_index-1].close;
-	return std::log(total_shares * close_price);
+	double close_price = daily_datas[date_index - 1].close * daily_datas[date_index - 1].adj_factor;
+	double mcap = total_shares * close_price;
+	if (mcap <= 0.0) return 0.0;
+	return std::log(mcap);
 }
 
 void log_mcap::update_log_mcap(const std::vector<StockDailyData>& daily_datas, const std::vector<StockDailyFinancialData>& financial_datas, const std::vector<int>& rebalances_date_indexs)

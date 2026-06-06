@@ -19,6 +19,13 @@ void ParamBuilder::BuildParamNet(std::vector<AdjustParam>& adjustParams,
 {
     adjustParams.clear();
 
+    // 前置校验：空 top_n_candidates 会导致所有模式静默零输出
+    if (config.GetTopNCandidates().empty())
+    {
+        LOG_WARN("ParamBuilder::BuildParamNet - top_n_candidates is empty, no parameters will be generated");
+        return;
+    }
+
     switch (config.GetMode())
     {
     case ParamSearchConfiger::SearchMode::GRID:
@@ -44,6 +51,14 @@ void ParamBuilder::BuildGrid(std::vector<AdjustParam>& out, const ParamSearchCon
     auto steps2 = GenerateSteps(cfg.GetVolatilityWeightMin(), cfg.GetVolatilityWeightMax(), cfg.GetGridStep());
     auto steps3 = GenerateSteps(cfg.GetMcapWeightMin(),      cfg.GetMcapWeightMax(),      cfg.GetGridStep());
     auto steps4 = GenerateSteps(cfg.GetEpWeightMin(),        cfg.GetEpWeightMax(),        cfg.GetGridStep());
+
+    // 网格组合数爆炸警告
+    {
+        long long estTotal = (long long)steps0.size() * steps1.size() * steps2.size()
+                           * steps3.size() * steps4.size() * cfg.GetTopNCandidates().size();
+        if (estTotal > GRID_EXPLOSION_WARN)
+            LOG_WARN("ParamBuilder::BuildGrid - estimated {} total combinations (>{})", estTotal, (long long)GRID_EXPLOSION_WARN);
+    }
 
     for (auto w0 : steps0)
     for (auto w1 : steps1)
@@ -78,27 +93,47 @@ void ParamBuilder::BuildGrid(std::vector<AdjustParam>& out, const ParamSearchCon
 // ===== 随机采样（Dirichlet分布）=====
 void ParamBuilder::BuildRandom(std::vector<AdjustParam>& out, const ParamSearchConfiger& cfg)
 {
-    std::mt19937 rng(std::random_device{}());
+    if (cfg.GetRandomSamples() <= 0)
+    {
+        LOG_WARN("ParamBuilder::BuildRandom - randomSamples is {} (<=0), no parameters generated", cfg.GetRandomSamples());
+        return;
+    }
+
+    const auto& topNCandidates = cfg.GetTopNCandidates();
+    if (topNCandidates.empty())
+    {
+        LOG_WARN("ParamBuilder::BuildRandom - top_n_candidates is empty, no parameters generated");
+        return;
+    }
+
+    unsigned int s = cfg.GetSeed();
+    std::mt19937 rng(s != 0 ? s : std::random_device{}());
 
     for (int i = 0; i < cfg.GetRandomSamples(); ++i)
     {
         AdjustParam param;
-        param.factor_weights = SampleDirichlet(rng, cfg);
-
-        if (cfg.GetNormalizeWeights())
-            NormalizeWeights(param.factor_weights);
+        param.factor_weights = SampleDirichlet(rng, cfg, cfg.GetNormalizeWeights());
 
         if (!cfg.GetAllowZeroWeight())
         {
+            int retries = 0;
             bool hasZero = false;
             for (auto w : param.factor_weights)
                 if (w < 1e-10) { hasZero = true; break; }
-            if (hasZero) { --i; continue; } //重新采样
+            while (hasZero && retries < MAX_ZERO_WEIGHT_RETRIES) {
+                param.factor_weights = SampleDirichlet(rng, cfg, cfg.GetNormalizeWeights());
+                hasZero = false;
+                for (auto w : param.factor_weights)
+                    if (w < 1e-10) { hasZero = true; break; }
+                ++retries;
+            }
+            if (hasZero) {
+                LOG_WARN("ParamBuilder::BuildRandom - exceeded max zero-weight retries ({}), allowing zero-weight sample", MAX_ZERO_WEIGHT_RETRIES);
+            }
         }
 
         //top_n：随机选取或全部候选
-        const auto& topNCandidates = cfg.GetTopNCandidates();
-        if (cfg.GetRandomTopN() && !topNCandidates.empty())
+        if (cfg.GetRandomTopN())
         {
             std::uniform_int_distribution<size_t> dist(0, topNCandidates.size() - 1);
             param.top_n = topNCandidates[dist(rng)];
@@ -144,6 +179,15 @@ void ParamBuilder::BuildSingleFactor(std::vector<AdjustParam>& out, const ParamS
             if (cfg.GetNormalizeWeights())
                 NormalizeWeights(param.factor_weights);
 
+            // 零权重检查（与 BuildGrid/BuildRandom 行为一致）
+            if (!cfg.GetAllowZeroWeight())
+            {
+                bool hasZero = false;
+                for (auto v : param.factor_weights)
+                    if (v < 1e-10) { hasZero = true; break; }
+                if (hasZero) continue;
+            }
+
             for (int tn : cfg.GetTopNCandidates())
             {
                 param.top_n = tn;
@@ -163,7 +207,9 @@ std::pair<double, double> ParamBuilder::GetWeightRange(int factorIdx, const Para
     case 2: return { cfg.GetVolatilityWeightMin(), cfg.GetVolatilityWeightMax() };
     case 3: return { cfg.GetMcapWeightMin(),      cfg.GetMcapWeightMax() };
     case 4: return { cfg.GetEpWeightMin(),        cfg.GetEpWeightMax() };
-    default: return { 0.0, 1.0 };
+    default:
+        LOG_ERROR("ParamBuilder::GetWeightRange - invalid factorIdx {} (FACTOR_NUM={}), returning [0,1]", factorIdx, FACTOR_NUM);
+        return { 0.0, 1.0 };
     }
 }
 
@@ -171,8 +217,15 @@ std::vector<double> ParamBuilder::GenerateSteps(double minVal, double maxVal, do
 {
     std::vector<double> result;
     if (step <= 0.0) return { minVal };
-    for (double v = minVal; v <= maxVal + 1e-10; v += step)
-        result.push_back(v);
+    if (minVal > maxVal)
+    {
+        LOG_WARN("ParamBuilder::GenerateSteps - minVal ({}) > maxVal ({}), using minVal only", minVal, maxVal);
+        return { minVal };
+    }
+    int n = static_cast<int>(std::round((maxVal - minVal) / step)) + 1;
+    result.reserve(n);
+    for (int i = 0; i < n; ++i)
+        result.push_back(minVal + i * step);
     return result;
 }
 
@@ -186,29 +239,72 @@ void ParamBuilder::NormalizeWeights(std::array<double, FACTOR_NUM>& weights)
 }
 
 std::array<double, FACTOR_NUM> ParamBuilder::SampleDirichlet(
-    std::mt19937& rng, const ParamSearchConfiger& cfg)
+    std::mt19937& rng, const ParamSearchConfiger& cfg, bool normalize)
 {
-    std::array<double, FACTOR_NUM> result{};
     std::array<std::pair<double, double>, FACTOR_NUM> ranges = {
         GetWeightRange(0, cfg), GetWeightRange(1, cfg),
         GetWeightRange(2, cfg), GetWeightRange(3, cfg),
         GetWeightRange(4, cfg)
     };
 
-    //用Gamma分布生成Dirichlet样本
     std::gamma_distribution<double> gamma(1.0, 1.0);
-    double sum = 0.0;
-    for (int i = 0; i < FACTOR_NUM; ++i)
+
+    auto sample_raw = [&]() -> std::array<double, FACTOR_NUM> {
+        std::array<double, FACTOR_NUM> result{};
+        double sum = 0.0;
+        for (int i = 0; i < FACTOR_NUM; ++i)
+        {
+            result[i] = gamma(rng);
+            sum += result[i];
+        }
+        //归一化后缩放到各因子[min, max]范围
+        for (int i = 0; i < FACTOR_NUM; ++i)
+        {
+            result[i] /= sum;
+            result[i] = ranges[i].first + result[i] * (ranges[i].second - ranges[i].first);
+        }
+        return result;
+    };
+
+    if (!normalize)
     {
-        result[i] = gamma(rng);
-        sum += result[i];
-    }
-    //归一化后缩放到各因子[min, max]范围
-    for (int i = 0; i < FACTOR_NUM; ++i)
-    {
-        result[i] /= sum;
-        result[i] = ranges[i].first + result[i] * (ranges[i].second - ranges[i].first);
+        return sample_raw();
     }
 
-    return result;
+    // normalize=true: 保证最终归一化后仍在[min,max]范围内
+    for (int retry = 0; retry < MAX_RANGE_RETRIES; ++retry)
+    {
+        auto result = sample_raw();
+
+        // 归一化
+        double sum = std::accumulate(result.begin(), result.end(), 0.0);
+        if (sum > 1e-10)
+        {
+            for (auto& w : result) w /= sum;
+        }
+        else
+        {
+            std::fill(result.begin(), result.end(), 1.0 / FACTOR_NUM);
+        }
+
+        // 检查是否仍在[min,max]范围内
+        bool inRange = true;
+        for (int i = 0; i < FACTOR_NUM; ++i)
+        {
+            if (result[i] < ranges[i].first - 1e-10 || result[i] > ranges[i].second + 1e-10)
+            {
+                inRange = false;
+                break;
+            }
+        }
+        if (inRange) return result;
+    }
+
+    // 回退：范围中点归一化
+    LOG_WARN("ParamBuilder::SampleDirichlet - exceeded max range retries ({}), falling back to midpoints", MAX_RANGE_RETRIES);
+    std::array<double, FACTOR_NUM> fallback{};
+    for (int i = 0; i < FACTOR_NUM; ++i)
+        fallback[i] = (ranges[i].first + ranges[i].second) / 2.0;
+    NormalizeWeights(fallback);
+    return fallback;
 }

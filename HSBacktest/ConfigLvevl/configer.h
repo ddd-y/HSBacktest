@@ -38,6 +38,9 @@ private:
     //随机模式下top_n是否也随机选取（为false则为每个权重组合生成所有top_n候选）
     bool random_top_n = false;
 
+    //RNG种子（0=使用random_device随机种子）
+    unsigned int seed = 0;
+
 public:
     // Getter / Setter
     SearchMode GetMode() const { return mode; }
@@ -86,26 +89,13 @@ public:
     bool GetRandomTopN() const { return random_top_n; }
     void SetRandomTopN(bool v) { random_top_n = v; }
 
-    void ReadConfigFromFile(const std::string& filename)
-    {
-        // 实现从JSON文件读取配置的逻辑
-    }
+    unsigned int GetSeed() const { return seed; }
+    void SetSeed(unsigned int v) { seed = v; }
+
+    void ReadConfigFromFile(const std::string& filename);
 };
 
-class DataLevelConfiger 
-{
-private:
-	int change_duration = 20; // 调仓周期（交易日）
-public:
-    int GetChangeDuration() const { return change_duration; }
 
-    void ReadConfigFromFile(const std::string& filename)
-    {
-        // 实现从JSON文件读取配置的逻辑
-	}
-};
-
-//暂时用不到，后边再说
 class StrategyConfiger
 {
     // ===== 调仓参数 =====
@@ -127,7 +117,7 @@ class StrategyConfiger
     bool auto_normalize_weights = true;
 
     // ===== 完整风控规则 =====
-    double single_position_limit = 0.02;  // 单票仓位上限
+    double single_position_limit = 0.5;  // 单票仓位上限
     double industry_position_limit = 0.2; // 单行业仓位上限
     double single_stock_stop_loss = 0.1;  // 单只股票止损比例（10%）
     double single_stock_take_profit = 0.3; // 单只股票止盈比例（30%）
@@ -148,17 +138,19 @@ public:
     double GetMcapWeight() const { return mcap_weight; }
     double GetEpWeight() const { return ep_weight; }
     bool GetAutoNormalizeWeights() const { return auto_normalize_weights; }
-     // 风控规则的Getter
+     // 风控规则的 Getter / Setter
     double GetSinglePositionLimit() const { return single_position_limit; }
+    void SetSinglePositionLimit(double v) { single_position_limit = v; }
     double GetIndustryPositionLimit() const { return industry_position_limit; }
+    void SetIndustryPositionLimit(double v) { industry_position_limit = v; }
     double GetSingleStockStopLoss() const { return single_stock_stop_loss; }
+    void SetSingleStockStopLoss(double v) { single_stock_stop_loss = v; }
     double GetSingleStockTakeProfit() const { return single_stock_take_profit; }
+    void SetSingleStockTakeProfit(double v) { single_stock_take_profit = v; }
     // 收益计算参数的Getter
     double GetRiskFreeRate() const { return risk_free_rate; }
-    void ReadConfigFromFile(const std::string& filename)
-    {
-        // 实现从JSON文件读取配置的逻辑
-	}
+
+    void ReadConfigFromFile(const std::string& filename);
 };
 
 class TransactionCostConfiger
@@ -181,24 +173,42 @@ public:
     double GetSellSlippageRate() const { return sell_slippage_rate; }
     double GetMarketImpactCoeff() const { return market_impact_coeff; }
 
-    void ReadConfigFromFile(const std::string& filename)
-    {
-        // 实现从JSON文件读取配置的逻辑
-    }
+    void ReadConfigFromFile(const std::string& filename);
 };
 
 class Configer
 {
 private:
-	DataLevelConfiger data_level_configer;
 	static Configer configer_instance;
 	static StrategyConfiger strategy_configer_instance;
     static TransactionCostConfiger transaction_configer_instance;
     static ParamSearchConfiger param_search_config_instance;
+
+    // ===== 系统级配置 =====
+    static std::vector<std::string> stock_data_files;
+    static bool use_mpi;
+    static std::string log_path;
+    static double init_capital;
+
 public:
-	static DataLevelConfiger& GetDataLevelConfiger() { return configer_instance.data_level_configer; }
     static StrategyConfiger& GetStrategyConfiger() { return strategy_configer_instance; }
 	static TransactionCostConfiger& GetTransactionCostConfiger() { return transaction_configer_instance; }
     static ParamSearchConfiger& GetParamSearchConfig() { return param_search_config_instance; }
+
+    // 系统配置 Getter / Setter
+    static const std::vector<std::string>& GetStockDataFiles() { return stock_data_files; }
+    static void SetStockDataFiles(const std::vector<std::string>& v) { stock_data_files = v; }
+
+    static bool GetUseMpi() { return use_mpi; }
+    static void SetUseMpi(bool v) { use_mpi = v; }
+
+    static const std::string& GetLogPath() { return log_path; }
+    static void SetLogPath(const std::string& v) { log_path = v; }
+
+    static double GetInitCapital() { return init_capital; }
+    static void SetInitCapital(double v) { init_capital = v; }
+
+    // 从 JSON 配置文件加载所有配置
+    static void LoadFromFile(const std::string& filename);
 };
 

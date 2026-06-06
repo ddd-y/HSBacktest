@@ -1,0 +1,230 @@
+$ wsl -d Ubuntu -- cat /home/dddy/.vs/HSBacktest/out/build/linux-debug/HSBacktest/logs/backtest.log
+[exit 0]
+2026-06-07 22:26:11.694 | warning | 18275 | StockSelector.cpp:274 | StockSelector::ScoreAndSelect - tradable (3) < top_n (80), capped to 3
+2026-06-07 22:26:11.694 | info | 18275 | StockSelector.cpp:251 | StockSelector::SelectIndustryNeutral - 3 industries, selected 3 stocks (target=3, min_per_ind=1) | ind=1000:1 ind=2000:1 ind=3000:1 
+2026-06-07 22:26:11.693 | info | 18266 | BacktestEngine.cpp:299 | Total Rebalances:              12
+2026-06-07 22:26:11.694 | info | 18266 | BacktestEngine.cpp:300 | Avg Turnover:              0.0000%
+2026-06-07 22:26:11.691 | info | 18271 | StockSelector.cpp:104 | StockSelector::ScoreAllStocks - 3 / 3 stocks are tradable at rebalance_idx=5
+2026-06-07 22:26:11.693 | info | 18290 | StockSelector.cpp:251 | StockSelector::SelectIndustryNeutral - 3 industries, selected 3 stocks (target=3, min_per_ind=1) | ind=1000:1 ind=2000:1 ind=3000:1 
+2026-06-07 22:26:11.693 | info | 18282 | BacktestEngine.cpp:108 | === Rebalance #10 | date=20231107 | date_idx=221 ===
+2026-06-07 22:26:11.693 | info | 18269 | BacktestEngine.cpp:108 | === Rebalance #2 | date=20230328 | date_idx=61 ===
+2026-06-07 22:26:11.694 | info | 18269 | StockSelector.cpp:104 | StockSelector::ScoreAllStocks - 3 / 3 stocks are tradable at rebalance_idx=2
+2026-06-07 22:26:11.694 | warning | 18269 | StockSelector.cpp:274 | StockSelector::ScoreAndSelect - tradable (3) < top_n (80), capped to 3
+2026-06-07 22:26:11.694 | info | 18269 | StockSelector.cpp:251 | StockSelector::SelectIndustryNeutral - 3 industries, selected 3 stocks (target=3, min_per_ind=1) | ind=1000:1 ind=2000:1 ind=3000:1 
+2026-06-07 22:26:11.692 | warning | 18262 | StockSelector.cpp:274 | StockSelector::ScoreAndSelect - tradable (3) < top_n (30), capped to 3
+2026-06-07 22:26:11.693 | info | 18287 | TradeExecutor.cpp:509 | REBALANCE | date=20230620 | target_count=3 | cash_after=10000.00 | nav=10000.00
+2026-06-07 22:26:11.695 | info | 18287 | BacktestEngine.cpp:108 | === Rebalance #6 | date=20230718 | date_idx=141 ===
+2026-06-07 22:26:11.694 | info | 18263 | StockSelector.cpp:104 | StockSelector::ScoreAllStocks - 3 / 3 stocks are tradable at rebalance_idx=3
+2026-06-07 22:26:11.695 | warning | 18263 | StockSelector.cpp:274 | StockSelector::ScoreAndSelect - tradable (3) < top_n (50), capped to 3
+2026-06-07 22:26:11.694 | info | 18228 | StockSelector.cpp:104 | StockSelector::ScoreAllStocks - 3 / 3 stocks are tradable at rebalance_idx=4
+2026-06-07 22:26:11.695 | warning | 18228 | StockSelector.cpp:274 | StockSelector::ScoreAndSelect - tradable (3) < top_n (100), capped to 3
+2026-06-07 22:26:11.694 | info | 18264 | StockSelector.cpp:104 | StockSelector::ScoreAllStocks - 3 / 3 stocks are tradable at rebalance_idx=4
+2026-06-07 22:26:11.695 | warning | 18264 | StockSelector.cpp:274 | StockSelector::ScoreAndSelect - tradable (3) < top_n (80), capped to 3
+2026-06-07 22:26:11.693 | info | 18289 | TradeExecutor.cpp:509 | REBALANCE | date=20230228 | target_count=3 | cash_after=10000.00 | nav=10000.00
+2026-06-07 22:26:11.695 | info | 18289 | BacktestEngine.cpp:108 | === Rebalance #2 | date=20230328 | date_idx=61 ===
+2026-06-07 22:26:11.694 | info | 18291 | TradeExecutor.cpp:509 | REBALANCE | date=20230523 | target_count=3 | cash_after=10000.00 | nav=10000.00
+2026-06-07 22:26:11.695 | info | 18291 | BacktestEngine.cpp:108 | === Rebalance #5 | date=20230620 | date_idx=121 ===
+2026-06-07 22:26:11.693 | info | 18279 | BacktestEngine.cpp:108 | === Rebalance #8 | date=20230912 | date_idx=181 ===
+2026-06-07 22:26:11.693 | info | 18276 | StockSelector.cpp:251 | StockSelector::SelectIndustryNeutral - 3 industries, selected 3 stocks (target=3, min_per_ind=1) | ind=1000:1 ind=2000:1 ind=3000:1 
+2026-06-07 22:26:11.694 | info | 18285 | StockSelector.cpp:251 | StockSelector::SelectIndustryNeutral - 3 industries, selected 3 stocks (target=3, min_per_ind=1) | ind=1000:1 ind=2000:1 ind=3000:1 
+2026-06-07 22:26:11.693 | info | 18268 | BacktestEngine.cpp:289 | ========================================
+2026-06-07 22:26:11.695 | info | 18285 | TradeExecutor.cpp:509 | REBALANCE | date=20230425 | target_count=3 | cash_after=10000.00 | nav=10000.00
+2026-06-07 22:26:11.695 | info | 18268 | BacktestEngine.cpp:290 | Initial Capital:         10000.00
+2026-06-07 22:26:11.692 | info | 18283 | TradeExecutor.cpp:509 | REBALANCE | date=20230815 | target_count=3 | cash_after=10000.00 | nav=10000.00
+2026-06-07 22:26:11.695 | info | 18283 | BacktestEngine.cpp:108 | === Rebalance #8 | date=20230912 | date_idx=181 ===
+2026-06-07 22:26:11.690 | info | 18261 | StockSelector.cpp:251 | StockSelector::SelectIndustryNeutral - 3 industries, selected 3 stocks (target=3, min_per_ind=1) | ind=1000:1 ind=2000:1 ind=3000:1 
+2026-06-07 22:26:11.694 | info | 18266 | BacktestEngine.cpp:301 | ========================================
+2026-06-07 22:26:11.692 | info | 18274 | StockSelector.cpp:251 | StockSelector::SelectIndustryNeutral - 3 industries, selected 3 stocks (target=3, min_per_ind=1) | ind=1000:1 ind=2000:1 ind=3000:1 
+2026-06-07 22:26:11.695 | info | 18274 | TradeExecutor.cpp:509 | REBALANCE | date=20230523 | target_count=3 | cash_after=10000.00 | nav=10000.00
+2026-06-07 22:26:11.696 | info | 18274 | BacktestEngine.cpp:108 | === Rebalance #5 | date=20230620 | date_idx=121 ===
+2026-06-07 22:26:11.694 | info | 18290 | TradeExecutor.cpp:509 | REBALANCE | date=20230523 | target_count=3 | cash_after=10000.00 | nav=10000.00
+2026-06-07 22:26:11.696 | info | 18290 | BacktestEngine.cpp:108 | === Rebalance #5 | date=20230620 | date_idx=121 ===
+2026-06-07 22:26:11.694 | info | 18269 | TradeExecutor.cpp:509 | REBALANCE | date=20230328 | target_count=3 | cash_after=10000.00 | nav=10000.00
+2026-06-07 22:26:11.694 | info | 18273 | BacktestEngine.cpp:67 | BacktestEngine reinitialized | init_capital=10000.00 | top_n=50 | adjustParamIndex=221
+2026-06-07 22:26:11.695 | info | 18262 | StockSelector.cpp:251 | StockSelector::SelectIndustryNeutral - 3 industries, selected 3 stocks (target=3, min_per_ind=1) | ind=1000:1 ind=2000:1 ind=3000:1 
+2026-06-07 22:26:11.693 | warning | 18288 | StockSelector.cpp:274 | StockSelector::ScoreAndSelect - tradable (3) < top_n (50), capped to 3
+2026-06-07 22:26:11.696 | info | 18288 | StockSelector.cpp:251 | StockSelector::SelectIndustryNeutral - 3 industries, selected 3 stocks (target=3, min_per_ind=1) | ind=1000:1 ind=2000:1 ind=3000:1 
+2026-06-07 22:26:11.695 | info | 18287 | StockSelector.cpp:104 | StockSelector::ScoreAllStocks - 3 / 3 stocks are tradable at rebalance_idx=6
+2026-06-07 22:26:11.695 | info | 18263 | StockSelector.cpp:251 | StockSelector::SelectIndustryNeutral - 3 industries, selected 3 stocks (target=3, min_per_ind=1) | ind=1000:1 ind=2000:1 ind=3000:1 
+2026-06-07 22:26:11.696 | info | 18263 | TradeExecutor.cpp:509 | REBALANCE | date=20230425 | target_count=3 | cash_after=10000.00 | nav=10000.00
+2026-06-07 22:26:11.695 | info | 18228 | StockSelector.cpp:251 | StockSelector::SelectIndustryNeutral - 3 industries, selected 3 stocks (target=3, min_per_ind=1) | ind=1000:1 ind=2000:1 ind=3000:1 
+2026-06-07 22:26:11.696 | info | 18228 | TradeExecutor.cpp:509 | REBALANCE | date=20230523 | target_count=3 | cash_after=10000.00 | nav=10000.00
+2026-06-07 22:26:11.695 | info | 18289 | StockSelector.cpp:104 | StockSelector::ScoreAllStocks - 3 / 3 stocks are tradable at rebalance_idx=2
+2026-06-07 22:26:11.696 | warning | 18289 | StockSelector.cpp:274 | StockSelector::ScoreAndSelect - tradable (3) < top_n (80), capped to 3
+2026-06-07 22:26:11.694 | info | 18278 | BacktestEngine.cpp:288 | ========== Backtest Report =============
+2026-06-07 22:26:11.695 | info | 18291 | StockSelector.cpp:104 | StockSelector::ScoreAllStocks - 3 / 3 stocks are tradable at rebalance_idx=5
+2026-06-07 22:26:11.696 | warning | 18291 | StockSelector.cpp:274 | StockSelector::ScoreAndSelect - tradable (3) < top_n (20), capped to 3
+2026-06-07 22:26:11.696 | info | 18291 | StockSelector.cpp:251 | StockSelector::SelectIndustryNeutral - 3 industries, selected 3 stocks (target=3, min_per_ind=1) | ind=1000:1 ind=2000:1 ind=3000:1 
+2026-06-07 22:26:11.694 | info | 18272 | StockSelector.cpp:104 | StockSelector::ScoreAllStocks - 3 / 3 stocks are tradable at rebalance_idx=3
+2026-06-07 22:26:11.695 | info | 18268 | BacktestEngine.cpp:291 | Final Net Value:         10000.00
+2026-06-07 22:26:11.696 | info | 18268 | BacktestEngine.cpp:292 | Total Return:              0.0000%
+2026-06-07 22:26:11.696 | info | 18268 | BacktestEngine.cpp:293 | Annual Return:             0.0000%
+2026-06-07 22:26:11.694 | info | 18284 | multi_runner.cpp:34 | 当前的线程号是：24
+2026-06-07 22:26:11.696 | info | 18284 | TradeExecutor.cpp:528 | TradeExecutor::ReInitialize - reset to init_capital=10000.00
+2026-06-07 22:26:11.696 | info | 18284 | BacktestEngine.cpp:67 | BacktestEngine reinitialized | init_capital=10000.00 | top_n=80 | adjustParamIndex=397
+2026-06-07 22:26:11.695 | info | 18266 | BacktestEngine.cpp:157 | BacktestEngine::Run - backtest completed
+2026-06-07 22:26:11.694 | warning | 18271 | StockSelector.cpp:274 | StockSelector::ScoreAndSelect - tradable (3) < top_n (30), capped to 3
+2026-06-07 22:26:11.696 | info | 18266 | multi_runner.cpp:34 | 当前的线程号是：6
+2026-06-07 22:26:11.697 | info | 18271 | StockSelector.cpp:251 | StockSelector::SelectIndustryNeutral - 3 industries, selected 3 stocks (target=3, min_per_ind=1) | ind=1000:1 ind=2000:1 ind=3000:1 
+2026-06-07 22:26:11.696 | info | 18290 | StockSelector.cpp:104 | StockSelector::ScoreAllStocks - 3 / 3 stocks are tradable at rebalance_idx=5
+2026-06-07 22:26:11.697 | warning | 18290 | StockSelector.cpp:274 | StockSelector::ScoreAndSelect - tradable (3) < top_n (100), capped to 3
+2026-06-07 22:26:11.696 | info | 18269 | BacktestEngine.cpp:108 | === Rebalance #3 | date=20230425 | date_idx=81 ===
+2026-06-07 22:26:11.697 | info | 18269 | StockSelector.cpp:104 | StockSelector::ScoreAllStocks - 3 / 3 stocks are tradable at rebalance_idx=3
+2026-06-07 22:26:11.696 | info | 18262 | TradeExecutor.cpp:509 | REBALANCE | date=20231205 | target_count=3 | cash_after=10000.00 | nav=10000.00
+2026-06-07 22:26:11.697 | info | 18262 | BacktestEngine.cpp:287 | ========================================
+2026-06-07 22:26:11.696 | info | 18288 | TradeExecutor.cpp:509 | REBALANCE | date=20230328 | target_count=3 | cash_after=10000.00 | nav=10000.00
+2026-06-07 22:26:11.694 | info | 18277 | StockSelector.cpp:104 | StockSelector::ScoreAllStocks - 3 / 3 stocks are tradable at rebalance_idx=4
+2026-06-07 22:26:11.696 | info | 18263 | BacktestEngine.cpp:108 | === Rebalance #4 | date=20230523 | date_idx=101 ===
+2026-06-07 22:26:11.697 | info | 18263 | StockSelector.cpp:104 | StockSelector::ScoreAllStocks - 3 / 3 stocks are tradable at rebalance_idx=4
+2026-06-07 22:26:11.694 | info | 18286 | TradeExecutor.cpp:509 | REBALANCE | date=20230620 | target_count=3 | cash_after=10000.00 | nav=10000.00
+2026-06-07 22:26:11.695 | info | 18264 | StockSelector.cpp:251 | StockSelector::SelectIndustryNeutral - 3 industries, selected 3 stocks (target=3, min_per_ind=1) | ind=1000:1 ind=2000:1 ind=3000:1 
+2026-06-07 22:26:11.696 | info | 18228 | BacktestEngine.cpp:108 | === Rebalance #5 | date=20230620 | date_idx=121 ===
+2026-06-07 22:26:11.697 | info | 18286 | BacktestEngine.cpp:108 | === Rebalance #6 | date=20230718 | date_idx=141 ===
+2026-06-07 22:26:11.696 | info | 18289 | StockSelector.cpp:251 | StockSelector::SelectIndustryNeutral - 3 industries, selected 3 stocks (target=3, min_per_ind=1) | ind=1000:1 ind=2000:1 ind=3000:1 
+2026-06-07 22:26:11.697 | info | 18289 | TradeExecutor.cpp:509 | REBALANCE | date=20230328 | target_count=3 | cash_after=10000.00 | nav=10000.00
+2026-06-07 22:26:11.697 | info | 18289 | BacktestEngine.cpp:108 | === Rebalance #3 | date=20230425 | date_idx=81 ===
+2026-06-07 22:26:11.696 | info | 18291 | TradeExecutor.cpp:509 | REBALANCE | date=20230620 | target_count=3 | cash_after=10000.00 | nav=10000.00
+2026-06-07 22:26:11.697 | info | 18291 | BacktestEngine.cpp:108 | === Rebalance #6 | date=20230718 | date_idx=141 ===
+2026-06-07 22:26:11.696 | warning | 18272 | StockSelector.cpp:274 | StockSelector::ScoreAndSelect - tradable (3) < top_n (30), capped to 3
+2026-06-07 22:26:11.696 | info | 18268 | BacktestEngine.cpp:294 | Annual Volatility:         0.0000%
+2026-06-07 22:26:11.695 | info | 18285 | BacktestEngine.cpp:108 | === Rebalance #4 | date=20230523 | date_idx=101 ===
+2026-06-07 22:26:11.694 | info | 18275 | TradeExecutor.cpp:509 | REBALANCE | date=20231010 | target_count=3 | cash_after=10000.00 | nav=10000.00
+2026-06-07 22:26:11.697 | info | 18275 | BacktestEngine.cpp:108 | === Rebalance #10 | date=20231107 | date_idx=221 ===
+2026-06-07 22:26:11.696 | info | 18284 | BacktestEngine.cpp:95 | BacktestEngine::Run - starting backtest with 3 stocks, 12 rebalance periods
+2026-06-07 22:26:11.695 | info | 18261 | TradeExecutor.cpp:509 | REBALANCE | date=20230620 | target_count=3 | cash_after=10000.00 | nav=10000.00
+2026-06-07 22:26:11.698 | info | 18261 | BacktestEngine.cpp:108 | === Rebalance #6 | date=20230718 | date_idx=141 ===
+2026-06-07 22:26:11.696 | info | 18266 | TradeExecutor.cpp:528 | TradeExecutor::ReInitialize - reset to init_capital=10000.00
+2026-06-07 22:26:11.698 | info | 18266 | BacktestEngine.cpp:67 | BacktestEngine reinitialized | init_capital=10000.00 | top_n=20 | adjustParamIndex=109
+2026-06-07 22:26:11.694 | info | 18282 | StockSelector.cpp:104 | StockSelector::ScoreAllStocks - 3 / 3 stocks are tradable at rebalance_idx=10
+2026-06-07 22:26:11.698 | warning | 18282 | StockSelector.cpp:274 | StockSelector::ScoreAndSelect - tradable (3) < top_n (30), capped to 3
+2026-06-07 22:26:11.694 | info | 18265 | BacktestEngine.cpp:108 | === Rebalance #1 | date=20230228 | date_idx=41 ===
+2026-06-07 22:26:11.698 | info | 18265 | StockSelector.cpp:104 | StockSelector::ScoreAllStocks - 3 / 3 stocks are tradable at rebalance_idx=1
+2026-06-07 22:26:11.697 | warning | 18269 | StockSelector.cpp:274 | StockSelector::ScoreAndSelect - tradable (3) < top_n (80), capped to 3
+2026-06-07 22:26:11.698 | info | 18269 | StockSelector.cpp:251 | StockSelector::SelectIndustryNeutral - 3 industries, selected 3 stocks (target=3, min_per_ind=1) | ind=1000:1 ind=2000:1 ind=3000:1 
+2026-06-07 22:26:11.697 | info | 18262 | BacktestEngine.cpp:288 | ========== Backtest Report =============
+2026-06-07 22:26:11.697 | info | 18288 | BacktestEngine.cpp:108 | === Rebalance #3 | date=20230425 | date_idx=81 ===
+2026-06-07 22:26:11.696 | warning | 18287 | StockSelector.cpp:274 | StockSelector::ScoreAndSelect - tradable (3) < top_n (20), capped to 3
+2026-06-07 22:26:11.697 | warning | 18263 | StockSelector.cpp:274 | StockSelector::ScoreAndSelect - tradable (3) < top_n (50), capped to 3
+2026-06-07 22:26:11.698 | info | 18263 | StockSelector.cpp:251 | StockSelector::SelectIndustryNeutral - 3 industries, selected 3 stocks (target=3, min_per_ind=1) | ind=1000:1 ind=2000:1 ind=3000:1 
+2026-06-07 22:26:11.697 | info | 18286 | StockSelector.cpp:104 | StockSelector::ScoreAllStocks - 3 / 3 stocks are tradable at rebalance_idx=6
+2026-06-07 22:26:11.693 | info | 18270 | BacktestEngine.cpp:108 | === Rebalance #4 | date=20230523 | date_idx=101 ===
+2026-06-07 22:26:11.698 | warning | 18286 | StockSelector.cpp:274 | StockSelector::ScoreAndSelect - tradable (3) < top_n (20), capped to 3
+2026-06-07 22:26:11.697 | info | 18264 | TradeExecutor.cpp:509 | REBALANCE | date=20230523 | target_count=3 | cash_after=10000.00 | nav=10000.00
+2026-06-07 22:26:11.696 | info | 18278 | BacktestEngine.cpp:289 | ========================================
+2026-06-07 22:26:11.697 | info | 18289 | StockSelector.cpp:104 | StockSelector::ScoreAllStocks - 3 / 3 stocks are tradable at rebalance_idx=3
+2026-06-07 22:26:11.697 | info | 18291 | StockSelector.cpp:104 | StockSelector::ScoreAllStocks - 3 / 3 stocks are tradable at rebalance_idx=6
+2026-06-07 22:26:11.698 | warning | 18291 | StockSelector.cpp:274 | StockSelector::ScoreAndSelect - tradable (3) < top_n (20), capped to 3
+2026-06-07 22:26:11.698 | info | 18291 | StockSelector.cpp:251 | StockSelector::SelectIndustryNeutral - 3 industries, selected 3 stocks (target=3, min_per_ind=1) | ind=1000:1 ind=2000:1 ind=3000:1 
+2026-06-07 22:26:11.697 | info | 18268 | BacktestEngine.cpp:295 | Sharpe Ratio:              0.0000
+2026-06-07 22:26:11.698 | info | 18268 | BacktestEngine.cpp:296 | Max Drawdown:              0.0000%
+2026-06-07 22:26:11.698 | info | 18268 | BacktestEngine.cpp:297 | Win Rate:                  0.0000%
+2026-06-07 22:26:11.697 | info | 18275 | StockSelector.cpp:104 | StockSelector::ScoreAllStocks - 3 / 3 stocks are tradable at rebalance_idx=10
+2026-06-07 22:26:11.697 | info | 18284 | BacktestEngine.cpp:108 | === Rebalance #0 | date=20230131 | date_idx=21 ===
+2026-06-07 22:26:11.695 | info | 18283 | StockSelector.cpp:104 | StockSelector::ScoreAllStocks - 3 / 3 stocks are tradable at rebalance_idx=8
+2026-06-07 22:26:11.699 | warning | 18283 | StockSelector.cpp:274 | StockSelector::ScoreAndSelect - tradable (3) < top_n (50), capped to 3
+2026-06-07 22:26:11.698 | info | 18261 | StockSelector.cpp:104 | StockSelector::ScoreAllStocks - 3 / 3 stocks are tradable at rebalance_idx=6
+2026-06-07 22:26:11.698 | info | 18266 | BacktestEngine.cpp:95 | BacktestEngine::Run - starting backtest with 3 stocks, 12 rebalance periods
+2026-06-07 22:26:11.696 | info | 18274 | StockSelector.cpp:104 | StockSelector::ScoreAllStocks - 3 / 3 stocks are tradable at rebalance_idx=5
+2026-06-07 22:26:11.697 | info | 18271 | TradeExecutor.cpp:509 | REBALANCE | date=20230620 | target_count=3 | cash_after=10000.00 | nav=10000.00
+2026-06-07 22:26:11.699 | info | 18271 | BacktestEngine.cpp:108 | === Rebalance #6 | date=20230718 | date_idx=141 ===
+2026-06-07 22:26:11.697 | info | 18290 | StockSelector.cpp:251 | StockSelector::SelectIndustryNeutral - 3 industries, selected 3 stocks (target=3, min_per_ind=1) | ind=1000:1 ind=2000:1 ind=3000:1 
+2026-06-07 22:26:11.696 | info | 18273 | BacktestEngine.cpp:95 | BacktestEngine::Run - starting backtest with 3 stocks, 12 rebalance periods
+2026-06-07 22:26:11.699 | info | 18273 | BacktestEngine.cpp:108 | === Rebalance #0 | date=20230131 | date_idx=21 ===
+2026-06-07 22:26:11.698 | info | 18262 | BacktestEngine.cpp:289 | ========================================
+2026-06-07 22:26:11.699 | info | 18262 | BacktestEngine.cpp:290 | Initial Capital:         10000.00
+2026-06-07 22:26:11.698 | info | 18288 | StockSelector.cpp:104 | StockSelector::ScoreAllStocks - 3 / 3 stocks are tradable at rebalance_idx=3
+2026-06-07 22:26:11.699 | warning | 18288 | StockSelector.cpp:274 | StockSelector::ScoreAndSelect - tradable (3) < top_n (50), capped to 3
+2026-06-07 22:26:11.698 | info | 18263 | TradeExecutor.cpp:509 | REBALANCE | date=20230523 | target_count=3 | cash_after=10000.00 | nav=10000.00
+2026-06-07 22:26:11.699 | info | 18263 | BacktestEngine.cpp:108 | === Rebalance #5 | date=20230620 | date_idx=121 ===
+2026-06-07 22:26:11.699 | info | 18263 | StockSelector.cpp:104 | StockSelector::ScoreAllStocks - 3 / 3 stocks are tradable at rebalance_idx=5
+2026-06-07 22:26:11.698 | info | 18286 | StockSelector.cpp:251 | StockSelector::SelectIndustryNeutral - 3 industries, selected 3 stocks (target=3, min_per_ind=1) | ind=1000:1 ind=2000:1 ind=3000:1 
+2026-06-07 22:26:11.699 | info | 18286 | TradeExecutor.cpp:509 | REBALANCE | date=20230718 | target_count=3 | cash_after=10000.00 | nav=10000.00
+2026-06-07 22:26:11.698 | info | 18278 | BacktestEngine.cpp:290 | Initial Capital:         10000.00
+2026-06-07 22:26:11.699 | info | 18278 | BacktestEngine.cpp:291 | Final Net Value:         10000.00
+2026-06-07 22:26:11.698 | warning | 18289 | StockSelector.cpp:274 | StockSelector::ScoreAndSelect - tradable (3) < top_n (80), capped to 3
+2026-06-07 22:26:11.699 | info | 18289 | StockSelector.cpp:251 | StockSelector::SelectIndustryNeutral - 3 industries, selected 3 stocks (target=3, min_per_ind=1) | ind=1000:1 ind=2000:1 ind=3000:1 
+2026-06-07 22:26:11.700 | info | 18289 | TradeExecutor.cpp:509 | REBALANCE | date=20230425 | target_count=3 | cash_after=10000.00 | nav=10000.00
+2026-06-07 22:26:11.698 | info | 18291 | TradeExecutor.cpp:509 | REBALANCE | date=20230718 | target_count=3 | cash_after=10000.00 | nav=10000.00
+2026-06-07 22:26:11.697 | info | 18272 | StockSelector.cpp:251 | StockSelector::SelectIndustryNeutral - 3 industries, selected 3 stocks (target=3, min_per_ind=1) | ind=1000:1 ind=2000:1 ind=3000:1 
+2026-06-07 22:26:11.700 | info | 18291 | BacktestEngine.cpp:108 | === Rebalance #7 | date=20230815 | date_idx=161 ===
+2026-06-07 22:26:11.697 | info | 18285 | StockSelector.cpp:104 | StockSelector::ScoreAllStocks - 3 / 3 stocks are tradable at rebalance_idx=4
+2026-06-07 22:26:11.695 | info | 18276 | TradeExecutor.cpp:509 | REBALANCE | date=20231205 | target_count=3 | cash_after=10000.00 | nav=10000.00
+2026-06-07 22:26:11.699 | info | 18284 | StockSelector.cpp:104 | StockSelector::ScoreAllStocks - 3 / 3 stocks are tradable at rebalance_idx=0
+2026-06-07 22:26:11.700 | warning | 18284 | StockSelector.cpp:274 | StockSelector::ScoreAndSelect - tradable (3) < top_n (80), capped to 3
+2026-06-07 22:26:11.699 | info | 18283 | StockSelector.cpp:251 | StockSelector::SelectIndustryNeutral - 3 industries, selected 3 stocks (target=3, min_per_ind=1) | ind=1000:1 ind=2000:1 ind=3000:1 
+2026-06-07 22:26:11.699 | warning | 18261 | StockSelector.cpp:274 | StockSelector::ScoreAndSelect - tradable (3) < top_n (20), capped to 3
+2026-06-07 22:26:11.700 | info | 18283 | TradeExecutor.cpp:509 | REBALANCE | date=20230912 | target_count=3 | cash_after=10000.00 | nav=10000.00
+2026-06-07 22:26:11.699 | info | 18266 | BacktestEngine.cpp:108 | === Rebalance #0 | date=20230131 | date_idx=21 ===
+2026-06-07 22:26:11.698 | info | 18282 | StockSelector.cpp:251 | StockSelector::SelectIndustryNeutral - 3 industries, selected 3 stocks (target=3, min_per_ind=1) | ind=1000:1 ind=2000:1 ind=3000:1 
+2026-06-07 22:26:11.700 | info | 18282 | TradeExecutor.cpp:509 | REBALANCE | date=20231107 | target_count=3 | cash_after=10000.00 | nav=10000.00
+2026-06-07 22:26:11.699 | info | 18290 | TradeExecutor.cpp:509 | REBALANCE | date=20230620 | target_count=3 | cash_after=10000.00 | nav=10000.00
+2026-06-07 22:26:11.699 | info | 18273 | StockSelector.cpp:104 | StockSelector::ScoreAllStocks - 3 / 3 stocks are tradable at rebalance_idx=0
+2026-06-07 22:26:11.698 | info | 18269 | TradeExecutor.cpp:509 | REBALANCE | date=20230425 | target_count=3 | cash_after=10000.00 | nav=10000.00
+2026-06-07 22:26:11.700 | warning | 18273 | StockSelector.cpp:274 | StockSelector::ScoreAndSelect - tradable (3) < top_n (50), capped to 3
+2026-06-07 22:26:11.700 | info | 18273 | StockSelector.cpp:251 | StockSelector::SelectIndustryNeutral - 3 industries, selected 3 stocks (target=3, min_per_ind=1) | ind=1000:1 ind=2000:1 ind=3000:1 
+2026-06-07 22:26:11.699 | info | 18288 | StockSelector.cpp:251 | StockSelector::SelectIndustryNeutral - 3 industries, selected 3 stocks (target=3, min_per_ind=1) | ind=1000:1 ind=2000:1 ind=3000:1 
+2026-06-07 22:26:11.700 | info | 18288 | TradeExecutor.cpp:509 | REBALANCE | date=20230425 | target_count=3 | cash_after=10000.00 | nav=10000.00
+2026-06-07 22:26:11.698 | info | 18287 | StockSelector.cpp:251 | StockSelector::SelectIndustryNeutral - 3 industries, selected 3 stocks (target=3, min_per_ind=1) | ind=1000:1 ind=2000:1 ind=3000:1 
+2026-06-07 22:26:11.700 | info | 18287 | TradeExecutor.cpp:509 | REBALANCE | date=20230718 | target_count=3 | cash_after=10000.00 | nav=10000.00
+2026-06-07 22:26:11.698 | info | 18270 | StockSelector.cpp:104 | StockSelector::ScoreAllStocks - 3 / 3 stocks are tradable at rebalance_idx=4
+2026-06-07 22:26:11.700 | warning | 18270 | StockSelector.cpp:274 | StockSelector::ScoreAndSelect - tradable (3) < top_n (100), capped to 3
+2026-06-07 22:26:11.700 | info | 18270 | StockSelector.cpp:251 | StockSelector::SelectIndustryNeutral - 3 industries, selected 3 stocks (target=3, min_per_ind=1) | ind=1000:1 ind=2000:1 ind=3000:1 
+2026-06-07 22:26:11.700 | info | 18270 | TradeExecutor.cpp:509 | REBALANCE | date=20230523 | target_count=3 | cash_after=10000.00 | nav=10000.00
+2026-06-07 22:26:11.694 | warning | 18281 | StockSelector.cpp:274 | StockSelector::ScoreAndSelect - tradable (3) < top_n (30), capped to 3
+2026-06-07 22:26:11.701 | info | 18281 | StockSelector.cpp:251 | StockSelector::SelectIndustryNeutral - 3 industries, selected 3 stocks (target=3, min_per_ind=1) | ind=1000:1 ind=2000:1 ind=3000:1 
+2026-06-07 22:26:11.701 | info | 18281 | TradeExecutor.cpp:509 | REBALANCE | date=20230131 | target_count=3 | cash_after=10000.00 | nav=10000.00
+2026-06-07 22:26:11.695 | info | 18279 | StockSelector.cpp:104 | StockSelector::ScoreAllStocks - 3 / 3 stocks are tradable at rebalance_idx=8
+2026-06-07 22:26:11.701 | info | 18281 | BacktestEngine.cpp:108 | === Rebalance #1 | date=20230228 | date_idx=41 ===
+2026-06-07 22:26:11.700 | info | 18291 | StockSelector.cpp:104 | StockSelector::ScoreAllStocks - 3 / 3 stocks are tradable at rebalance_idx=7
+2026-06-07 22:26:11.700 | warning | 18285 | StockSelector.cpp:274 | StockSelector::ScoreAndSelect - tradable (3) < top_n (100), capped to 3
+2026-06-07 22:26:11.701 | info | 18285 | StockSelector.cpp:251 | StockSelector::SelectIndustryNeutral - 3 industries, selected 3 stocks (target=3, min_per_ind=1) | ind=1000:1 ind=2000:1 ind=3000:1 
+2026-06-07 22:26:11.701 | info | 18285 | TradeExecutor.cpp:509 | REBALANCE | date=20230523 | target_count=3 | cash_after=10000.00 | nav=10000.00
+2026-06-07 22:26:11.698 | warning | 18275 | StockSelector.cpp:274 | StockSelector::ScoreAndSelect - tradable (3) < top_n (80), capped to 3
+2026-06-07 22:26:11.700 | info | 18261 | StockSelector.cpp:251 | StockSelector::SelectIndustryNeutral - 3 industries, selected 3 stocks (target=3, min_per_ind=1) | ind=1000:1 ind=2000:1 ind=3000:1 
+2026-06-07 22:26:11.701 | info | 18261 | TradeExecutor.cpp:509 | REBALANCE | date=20230718 | target_count=3 | cash_after=10000.00 | nav=10000.00
+2026-06-07 22:26:11.701 | info | 18261 | BacktestEngine.cpp:108 | === Rebalance #7 | date=20230815 | date_idx=161 ===
+2026-06-07 22:26:11.700 | info | 18283 | BacktestEngine.cpp:108 | === Rebalance #9 | date=20231010 | date_idx=201 ===
+2026-06-07 22:26:11.701 | info | 18283 | StockSelector.cpp:104 | StockSelector::ScoreAllStocks - 3 / 3 stocks are tradable at rebalance_idx=9
+2026-06-07 22:26:11.699 | warning | 18274 | StockSelector.cpp:274 | StockSelector::ScoreAndSelect - tradable (3) < top_n (100), capped to 3
+2026-06-07 22:26:11.701 | info | 18274 | StockSelector.cpp:251 | StockSelector::SelectIndustryNeutral - 3 industries, selected 3 stocks (target=3, min_per_ind=1) | ind=1000:1 ind=2000:1 ind=3000:1 
+2026-06-07 22:26:11.700 | info | 18290 | BacktestEngine.cpp:108 | === Rebalance #6 | date=20230718 | date_idx=141 ===
+2026-06-07 22:26:11.698 | warning | 18265 | StockSelector.cpp:274 | StockSelector::ScoreAndSelect - tradable (3) < top_n (100), capped to 3
+2026-06-07 22:26:11.701 | info | 18265 | StockSelector.cpp:251 | StockSelector::SelectIndustryNeutral - 3 industries, selected 3 stocks (target=3, min_per_ind=1) | ind=1000:1 ind=2000:1 ind=3000:1 
+2026-06-07 22:26:11.700 | info | 18273 | TradeExecutor.cpp:509 | REBALANCE | date=20230131 | target_count=3 | cash_after=10000.00 | nav=10000.00
+2026-06-07 22:26:11.701 | info | 18273 | BacktestEngine.cpp:108 | === Rebalance #1 | date=20230228 | date_idx=41 ===
+2026-06-07 22:26:11.700 | info | 18288 | BacktestEngine.cpp:108 | === Rebalance #4 | date=20230523 | date_idx=101 ===
+2026-06-07 22:26:11.702 | info | 18288 | StockSelector.cpp:104 | StockSelector::ScoreAllStocks - 3 / 3 stocks are tradable at rebalance_idx=4
+2026-06-07 22:26:11.699 | warning | 18263 | StockSelector.cpp:274 | StockSelector::ScoreAndSelect - tradable (3) < top_n (50), capped to 3
+2026-06-07 22:26:11.697 | info | 18228 | StockSelector.cpp:104 | StockSelector::ScoreAllStocks - 3 / 3 stocks are tradable at rebalance_idx=5
+2026-06-07 22:26:11.702 | warning | 18228 | StockSelector.cpp:274 | StockSelector::ScoreAndSelect - tradable (3) < top_n (100), capped to 3
+2026-06-07 22:26:11.699 | info | 18286 | BacktestEngine.cpp:108 | === Rebalance #7 | date=20230815 | date_idx=161 ===
+2026-06-07 22:26:11.698 | info | 18264 | BacktestEngine.cpp:108 | === Rebalance #5 | date=20230620 | date_idx=121 ===
+2026-06-07 22:26:11.701 | info | 18270 | BacktestEngine.cpp:108 | === Rebalance #5 | date=20230620 | date_idx=121 ===
+2026-06-07 22:26:11.702 | info | 18270 | StockSelector.cpp:104 | StockSelector::ScoreAllStocks - 3 / 3 stocks are tradable at rebalance_idx=5
+2026-06-07 22:26:11.701 | info | 18281 | StockSelector.cpp:104 | StockSelector::ScoreAllStocks - 3 / 3 stocks are tradable at rebalance_idx=1
+2026-06-07 22:26:11.702 | warning | 18281 | StockSelector.cpp:274 | StockSelector::ScoreAndSelect - tradable (3) < top_n (30), capped to 3
+2026-06-07 22:26:11.698 | info | 18268 | BacktestEngine.cpp:298 | Total Trade Days:             232
+2026-06-07 22:26:11.702 | info | 18268 | BacktestEngine.cpp:299 | Total Rebalances:              12
+2026-06-07 22:26:11.700 | info | 18272 | TradeExecutor.cpp:509 | REBALANCE | date=20230425 | target_count=3 | cash_after=10000.00 | nav=10000.00
+2026-06-07 22:26:11.702 | info | 18272 | BacktestEngine.cpp:108 | === Rebalance #4 | date=20230523 | date_idx=101 ===
+2026-06-07 22:26:11.700 | info | 18276 | BacktestEngine.cpp:287 | ========================================
+2026-06-07 22:26:11.701 | info | 18275 | StockSelector.cpp:251 | StockSelector::SelectIndustryNeutral - 3 industries, selected 3 stocks (target=3, min_per_ind=1) | ind=1000:1 ind=2000:1 ind=3000:1 
+2026-06-07 22:26:11.700 | info | 18284 | StockSelector.cpp:251 | StockSelector::SelectIndustryNeutral - 3 industries, selected 3 stocks (target=3, min_per_ind=1) | ind=1000:1 ind=2000:1 ind=3000:1 
+2026-06-07 22:26:11.703 | info | 18284 | TradeExecutor.cpp:509 | REBALANCE | date=20230131 | target_count=3 | cash_after=10000.00 | nav=10000.00
+2026-06-07 22:26:11.703 | info | 18284 | BacktestEngine.cpp:108 | === Rebalance #1 | date=20230228 | date_idx=41 ===
+2026-06-07 22:26:11.700 | info | 18266 | StockSelector.cpp:104 | StockSelector::ScoreAllStocks - 3 / 3 stocks are tradable at rebalance_idx=0
+2026-06-07 22:26:11.701 | warning | 18283 | StockSelector.cpp:274 | StockSelector::ScoreAndSelect - tradable (3) < top_n (50), capped to 3
+2026-06-07 22:26:11.699 | info | 18271 | StockSelector.cpp:104 | StockSelector::ScoreAllStocks - 3 / 3 stocks are tradable at rebalance_idx=6
+2026-06-07 22:26:11.700 | info | 18282 | BacktestEngine.cpp:108 | === Rebalance #11 | date=20231205 | date_idx=241 ===
+2026-06-07 22:26:11.703 | info | 18282 | StockSelector.cpp:104 | StockSelector::ScoreAllStocks - 3 / 3 stocks are tradable at rebalance_idx=11
+2026-06-07 22:26:11.700 | info | 18269 | BacktestEngine.cpp:108 | === Rebalance #4 | date=20230523 | date_idx=101 ===
+2026-06-07 22:26:11.701 | info | 18290 | StockSelector.cpp:104 | StockSelector::ScoreAllStocks - 3 / 3 stocks are tradable at rebalance_idx=6
+2026-06-07 22:26:11.703 | warning | 18282 | StockSelector.cpp:274 | StockSelector::ScoreAndSelect - tradable (3) < top_n (30), capped to 3
+2026-06-07 22:26:11.701 | info | 18273 | StockSelector.cpp:104 | StockSelector::ScoreAllStocks - 3 / 3 stocks are tradable at rebalance_idx=1
+2026-06-07 22:26:11.703 | warning | 18273 | StockSelector.cpp:274 | StockSelector::ScoreAndSelect - tradable (3) < top_n (50), capped to 3
+2026-06-07 22:26:11.697 | warning | 18277 | StockSelector.cpp:274 | StockSelector::ScoreAndSelect - tradable (3) < top_n (30), capped to 3
+2026-06-07 22:26:11.702 | warning | 18288 | StockSelector.cpp:274 | StockSelector::ScoreAndSelect - tradable (3) < top_n (50), capped to 3
+2026-06-07 22:26:11.702 | info | 18263 | StockSelector.cpp:251 | StockSelector::SelectIndustryNeutral - 3 industries, selected 3 stocks (target=3, min_per_ind=1) | ind=1000:1 ind=2000:1 ind=3000:1 
+2026-06-07 22:26:11.702 | info | 18228 | StockSelector.cpp:251 | StockSelecto
+
+[… truncated 223616 chars …]

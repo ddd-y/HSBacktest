@@ -25,24 +25,36 @@ private:
 	std::vector<int32_t> dates;
 	//可调整因子数组
 	std::vector<AdjustParam> adjust_params;
+	//用于MPI，标记此次任务的起始与终止
+	int params_start = 0;
+	int params_end = 0;
 	// 执行所有股票因子计算
 	void calculate_all_factors();
 
 	static GlobalData* Globalinstance;
 public:
-	int GetAdjustParamCount() const { return static_cast<int>(adjust_params.size()); }
+
+	void MPI_ChangeDataRange(int start, int end) 
+	{
+		params_start = start;
+		params_end = end;
+	}
+
+	// 用自定义参数替换 adjust_params（用于基准测试）
+	void SetCustomAdjustParams(const std::vector<AdjustParam>& params)
+	{
+		adjust_params = params;
+		params_start = 0;
+		params_end = static_cast<int>(params.size());
+	}
+
+	int GetAdjustParamCount() const { return params_end - params_start; }
 	
 	GlobalData() = default;
 	GlobalData(const std::vector<std::string>& stock_k_data_files);
 
 	// 初始化全局数据类，只需要传入股票K线数据文件路径列表
 	static void Init(const std::vector<std::string>& stock_k_data_files);
-
-	/*
-	* @brief 初始化可调整参数，每个进程分配不同参数组
-	* @param process_size 进程数
-	*/
-	static void InitAdjustParams(int process_size);
 
 	static void Destroy()
     {
@@ -74,8 +86,9 @@ public:
 	*/
 	inline std::array<double, FACTOR_NUM> GetWeights(int index)
 	{
-		if (index >= 0 && index < static_cast<int>(adjust_params.size()))
-			return adjust_params[index].factor_weights;
+		int realIdx = params_start + index;
+		if (realIdx >= 0 && realIdx < static_cast<int>(adjust_params.size()))
+			return adjust_params[realIdx].factor_weights;
 
 		// fallback：从 StrategyConfiger 读取默认值
 		return std::array<double, FACTOR_NUM>({
@@ -93,8 +106,9 @@ public:
 	*/
 	inline int GetTopN(int index)
 	{
-		if (index >= 0 && index < static_cast<int>(adjust_params.size()))
-			return adjust_params[index].top_n;
+		int realIdx = params_start + index;
+		if (realIdx >= 0 && realIdx < static_cast<int>(adjust_params.size()))
+			return adjust_params[realIdx].top_n;
 
 		return Configer::GetStrategyConfiger().GetTopN();
 	}

@@ -1,8 +1,14 @@
-﻿// HSBacktest.h: 标准系统包含文件的包含文件
-// 或项目特定的包含文件。
+﻿// HSBacktest.h: 系统初始化 & 顶层入口
 
 #pragma once
 
-#include <iostream>
-
-// TODO: 在此处引用程序需要的其他标头。
+// ==========================================
+// 初始化整个回测系统并启动运行
+//
+// 配置从 Configer 读取（stock_data_files / use_mpi / log_path）
+// 单机模式 → MultiRunner::MultiRun()
+// MPI 模式  → HostManager::distribute_task()
+//
+// @return 成功返回 true
+// ==========================================
+bool InitAndRun();
