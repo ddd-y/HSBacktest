@@ -33,7 +33,7 @@ void MultiRunner::MultiRun()
 		int tid = omp_get_thread_num();
 		LOG_INFO("当前的线程号是：{}",tid);
 		const int cpu_serial_num = i / chunk_size % cpu_num;
-		Engines[cpu_serial_num]->ReInitialize(i);
+		Engines[cpu_serial_num]->ReInitialize(NOW_CAPITAL, i);
 		Engines[cpu_serial_num]->Run();
 
 		PerformanceCollector::GetPerformanceCollector()->AddSummary(

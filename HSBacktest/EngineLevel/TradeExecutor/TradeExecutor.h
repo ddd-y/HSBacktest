@@ -58,6 +58,7 @@ private:
 	std::vector<PositionRecord> positions;              // 当前持仓列表
 	std::vector<TradeRecord> trade_history;             // 交易历史
 	std::vector<NetValueSnapshot> nav_history;          // 净值历史（逐日）
+	std::vector<double> turnover_rates;                 // 每次调仓的换手率
 
 public:
 	explicit TradeDataManager(double init_capital = 1000000.0);
@@ -83,6 +84,7 @@ public:
 
 	// 查询净值历史
 	const std::vector<NetValueSnapshot>& GetNavHistory() const { return nav_history; }
+	const std::vector<double>& GetTurnoverRates() const { return turnover_rates; }
 };
 
 // ==========================================
@@ -132,7 +134,7 @@ public:
 	void ClosePosition(int stock_index, double price, int trade_date);
 
 	// 平掉所有持仓
-	void CloseAllPositions(const std::vector<int>& trade_dates, const std::vector<double>& prices);
+	void CloseAllPositions(int trade_date, const std::vector<double>& prices);
 
 	// ===== 逐日更新 =====
 	// 每日更新持仓市值（根据当日收盘价）
@@ -157,14 +159,13 @@ public:
 	void CheckAllStopLossTakeProfit(const std::vector<double>& current_prices, int trade_date);
 
 	// ===== 调仓接口 =====
-	// 调仓：卖出不在目标列表中的股票，买入目标列表中的股票
-	// target_indices: 目标持仓股票索引列表
-	// prices: 所有股票的当前价格
-	// trade_date: 当前交易日期
+	// 调仓：卖出不在目标列表中的股票，买入目标列表中的股票，做了防止超配的处理
+	// @param target_indices: 目标持仓股票索引列表
+	// @param prices: 所有股票的当前价格
+	// @param trade_date: 当前交易日期
 	void Rebalance(const std::vector<int>& target_indices,
 		const std::vector<double>& prices,
-		int trade_date,
-		double total_capital);
+		int trade_date);
 
 	// ===== 查询 =====
 	const TradeDataManager& GetDataManager() const { return data_manager; }

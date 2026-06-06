@@ -80,6 +80,8 @@ void ParamBuilder::BuildRandom(std::vector<AdjustParam>& out, const ParamSearchC
 {
     std::mt19937 rng(std::random_device{}());
 
+    constexpr int MAX_ZERO_WEIGHT_RETRIES = 100;
+
     for (int i = 0; i < cfg.GetRandomSamples(); ++i)
     {
         AdjustParam param;
@@ -90,10 +92,22 @@ void ParamBuilder::BuildRandom(std::vector<AdjustParam>& out, const ParamSearchC
 
         if (!cfg.GetAllowZeroWeight())
         {
+            int retries = 0;
             bool hasZero = false;
             for (auto w : param.factor_weights)
                 if (w < 1e-10) { hasZero = true; break; }
-            if (hasZero) { --i; continue; } //重新采样
+            while (hasZero && retries < MAX_ZERO_WEIGHT_RETRIES) {
+                param.factor_weights = SampleDirichlet(rng, cfg);
+                if (cfg.GetNormalizeWeights())
+                    NormalizeWeights(param.factor_weights);
+                hasZero = false;
+                for (auto w : param.factor_weights)
+                    if (w < 1e-10) { hasZero = true; break; }
+                ++retries;
+            }
+            if (hasZero) {
+                LOG_WARN("ParamBuilder::BuildRandom - exceeded max retries ({}), allowing zero-weight sample", MAX_ZERO_WEIGHT_RETRIES);
+            }
         }
 
         //top_n：随机选取或全部候选

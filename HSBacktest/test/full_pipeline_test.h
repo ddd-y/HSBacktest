@@ -11,20 +11,19 @@
 #include "../Datalevel/stock_k_data.h"
 #include "../Datalevel/factor_calculate/factorbase.h"
 #include <fstream>
-#include <iostream>
 #include <iomanip>
 #include <cmath>
-#include <cassert>
+#include <cstdio>
 #include <string>
 
-// 断言宏，带文件名行号
+// 断言宏
 #define TEST_CHECK(cond, msg) \
     do { \
         if (!(cond)) { \
-            std::cerr << "[FAIL] " << msg << " (" << __FILE__ << ":" << __LINE__ << ")" << std::endl; \
+            LOG_ERROR("[FAIL] {} ({}:{})", msg, __FILE__, __LINE__); \
             passed = false; \
         } else { \
-            std::cout << "[PASS] " << msg << std::endl; \
+            LOG_INFO("[PASS] {}", msg); \
         } \
     } while(0)
 
@@ -32,7 +31,6 @@ static bool passed = true;
 
 // 生成单只股票22个交易日的测试CSV文件
 void generate_fulltest_csv() {
-    // 主日线数据
     {
         std::ofstream ofs("fulltest_daily.csv");
         ofs << "trade_date,close,open,adj_factor,industry_code,is_suspended,is_delisted,is_limit_up,is_limit_down" << std::endl;
@@ -44,7 +42,6 @@ void generate_fulltest_csv() {
             price += (i % 5 == 0 ? -2.0 : 1.0);
         }
     }
-    // 扩展数据
     {
         std::ofstream ofs("fulltest_daily_extended.csv");
         ofs << "trade_date,high,low,volume,amount" << std::endl;
@@ -58,7 +55,6 @@ void generate_fulltest_csv() {
             vol += 50000.0;
         }
     }
-    // 财务数据
     {
         std::ofstream ofs("fulltest_daily_financial.csv");
         ofs << "cash_dividend,split_ratio,total_shares,float_shares,eps_ttm,pe_ttm,pb_lf,roe_ttm" << std::endl;
@@ -73,17 +69,16 @@ void full_pipeline_test()
     passed = true;
     HSBacktest::Logger::getInstance().init("fulltest");
 
-    std::cout << "\n========================================" << std::endl;
-    std::cout << "   全流程检验：数据 → 因子 → 选股 → 交易 → 绩效" << std::endl;
-    std::cout << "========================================\n" << std::endl;
+    LOG_INFO("========================================");
+    LOG_INFO("   全流程检验：数据 → 因子 → 选股 → 交易 → 绩效");
+    LOG_INFO("========================================");
 
     // ==================== 阶段 0：生成数据 ====================
     generate_fulltest_csv();
 
     // ==================== 阶段 1：数据加载检验 ====================
-    std::cout << "\n--- [阶段1] 数据加载 ---" << std::endl;
+    LOG_INFO("--- [阶段1] 数据加载 ---");
 
-    // 配置参数搜索：随机 3 组，减少耗时
     auto& search_cfg = Configer::GetParamSearchConfig();
     search_cfg.SetMode(ParamSearchConfiger::SearchMode::RANDOM);
     search_cfg.SetRandomSamples(3);
@@ -103,22 +98,19 @@ void full_pipeline_test()
     int stock_count = gd->get_stock_count();
     int param_count = gd->GetAdjustParamCount();
 
-    // 数据天数
     StockKData* skd = gd->get_stock_k_data(0);
     TEST_CHECK(skd != nullptr, "StockKData 不为空");
     TEST_CHECK(skd->get_daily_datas().size() == 22, "日线数据天数 == 22");
 
-    std::cout << "  (股票数=" << stock_count << ", 参数组=" << param_count
-              << ", 调仓日=" << gd->get_rebalance_index().size() << ")" << std::endl;
+    LOG_INFO("  (股票数={}, 参数组={}, 调仓日={})", stock_count, param_count, gd->get_rebalance_index().size());
 
     // ==================== 阶段 2：因子计算检验 ====================
-    std::cout << "\n--- [阶段2] 因子计算 ---" << std::endl;
+    LOG_INFO("--- [阶段2] 因子计算 ---");
 
     FactorDatabase* fdb = gd->get_factor_database(0);
     TEST_CHECK(fdb != nullptr, "FactorDatabase 不为空");
 
     if (fdb) {
-        // 检查每个因子是否计算了（调仓日位置应该有值）
         int rb_idx = gd->get_rebalance_index()[0];
         double mom  = fdb->get_momentum_20_data().get_momentum_20(rb_idx);
         double vol  = fdb->get_volatility_20_data().get_volatility_20(rb_idx);
@@ -132,16 +124,15 @@ void full_pipeline_test()
         TEST_CHECK(!std::isnan(mcap)&& !std::isinf(mcap),"对数市值因子非 NaN/Inf");
         TEST_CHECK(!std::isnan(to)  && !std::isinf(to),  "换手率因子非 NaN/Inf");
 
-        std::cout << "  (momentum=" << mom << ", volatility=" << vol
-                  << ", ep=" << ep << ", mcap=" << mcap << ", turnover=" << to << ")" << std::endl;
+        LOG_INFO("  (momentum={:.4f}, volatility={:.4f}, ep={:.4f}, mcap={:.4f}, turnover={:.4f})",
+            mom, vol, ep, mcap, to);
     }
 
     // ==================== 阶段 3：参数构建检验 ====================
-    std::cout << "\n--- [阶段3] 参数构建 ---" << std::endl;
+    LOG_INFO("--- [阶段3] 参数构建 ---");
 
     TEST_CHECK(param_count == 3, "参数组数 == 3 (3 组随机采样)");
 
-    // 验证每组参数的权重
     for (int i = 0; i < param_count; ++i) {
         auto w = gd->GetWeights(i);
         int tn = gd->GetTopN(i);
@@ -157,16 +148,12 @@ void full_pipeline_test()
         TEST_CHECK(std::abs(sum - 1.0) < 0.01, "参数组 " + std::to_string(i) + " 权重之和 ≈ 1.0");
         TEST_CHECK(tn == 20, "参数组 " + std::to_string(i) + " top_n == 20");
 
-        std::cout << "  参数[" << i << "]: weights=[";
-        for (int j = 0; j < FACTOR_NUM; ++j) {
-            if (j > 0) std::cout << ", ";
-            std::cout << std::fixed << std::setprecision(3) << w[j];
-        }
-        std::cout << "] top_n=" << tn << std::endl;
+        LOG_INFO("  参数[{}]: weights=[{:.3f}, {:.3f}, {:.3f}, {:.3f}, {:.3f}] top_n={}",
+            i, w[0], w[1], w[2], w[3], w[4], tn);
     }
 
     // ==================== 阶段 4：回测引擎检验 ====================
-    std::cout << "\n--- [阶段4] 回测引擎 ---" << std::endl;
+    LOG_INFO("--- [阶段4] 回测引擎 ---");
 
     PerformanceCollector::Initialize();
 
@@ -174,7 +161,6 @@ void full_pipeline_test()
     engine.Initialize(1000000.0, 0);
     TEST_CHECK(engine.IsInitialized(), "BacktestEngine 初始化成功");
 
-    // 跑第一组参数
     engine.Run();
     BacktestSummary s0 = engine.GetSummary();
 
@@ -183,10 +169,9 @@ void full_pipeline_test()
     TEST_CHECK(s0.final_net_value > 0.0, "最终净值 > 0");
     TEST_CHECK(s0.initial_capital == 1000000.0, "初始资金正确");
 
-    std::cout << "  第一组绩效: 总收益=" << s0.total_return * 100 << "%, 夏普=" << s0.sharpe_ratio
-              << ", 回撤=" << s0.max_drawdown * 100 << "%, 胜率=" << s0.win_rate * 100 << "%" << std::endl;
+    LOG_INFO("  第一组绩效: 总收益={:.2f}%, 夏普={:.4f}, 回撤={:.2f}%, 胜率={:.2f}%",
+        s0.total_return * 100, s0.sharpe_ratio, s0.max_drawdown * 100, s0.win_rate * 100);
 
-    // 跑剩余参数组，找最优
     BacktestSummary best = s0;
     int best_idx = 0;
     for (int i = 1; i < param_count; ++i) {
@@ -200,40 +185,41 @@ void full_pipeline_test()
         }
     }
 
-    // 绩效结果合理性检验
     TEST_CHECK(!std::isnan(best.total_return) && !std::isinf(best.total_return), "最优总收益非 NaN/Inf");
     TEST_CHECK(!std::isnan(best.sharpe_ratio) && !std::isinf(best.sharpe_ratio), "最优夏普非 NaN/Inf");
     TEST_CHECK(best.max_drawdown >= 0.0 && best.max_drawdown <= 1.0, "最大回撤在 [0, 1] 范围");
     TEST_CHECK(best.win_rate >= 0.0 && best.win_rate <= 1.0, "胜率在 [0, 1] 范围");
 
     // ==================== 阶段 5：最优参数输出 ====================
-    std::cout << "\n--- [阶段5] 最优参数 ---" << std::endl;
+    LOG_INFO("--- [阶段5] 最优参数 ---");
 
     auto best_weights = gd->GetWeights(best_idx);
-    std::cout << "  最优参数索引: " << best_idx << std::endl;
-    std::cout << "  权重: [";
-    for (int j = 0; j < FACTOR_NUM; ++j) {
-        if (j > 0) std::cout << ", ";
-        std::cout << std::fixed << std::setprecision(4) << best_weights[j];
-    }
-    std::cout << "]" << std::endl;
-    std::cout << "  选股数: " << gd->GetTopN(best_idx) << std::endl;
-    std::cout << "  总收益: " << best.total_return * 100 << "%" << std::endl;
-    std::cout << "  年化:   " << best.annual_return * 100 << "%" << std::endl;
-    std::cout << "  夏普:   " << best.sharpe_ratio << std::endl;
-    std::cout << "  回撤:   " << best.max_drawdown * 100 << "%" << std::endl;
-    std::cout << "  胜率:   " << best.win_rate * 100 << "%" << std::endl;
-    std::cout << "  净值:   " << best.final_net_value << std::endl;
+    LOG_INFO("  最优参数索引: {}", best_idx);
+    LOG_INFO("  权重: [{:.4f}, {:.4f}, {:.4f}, {:.4f}, {:.4f}]",
+        best_weights[0], best_weights[1], best_weights[2], best_weights[3], best_weights[4]);
+    LOG_INFO("  选股数: {}", gd->GetTopN(best_idx));
+    LOG_INFO("  总收益: {:.2f}%", best.total_return * 100);
+    LOG_INFO("  年化:   {:.2f}%", best.annual_return * 100);
+    LOG_INFO("  夏普:   {:.4f}", best.sharpe_ratio);
+    LOG_INFO("  回撤:   {:.2f}%", best.max_drawdown * 100);
+    LOG_INFO("  胜率:   {:.2f}%", best.win_rate * 100);
+    LOG_INFO("  净值:   {:.2f}", best.final_net_value);
+
+    TEST_CHECK(!std::isnan(best.annual_return), "最优年化收益非 NaN");
 
     // ==================== 清理 ====================
+    delete PerformanceCollector::GetPerformanceCollector();
     GlobalData::Destroy();
+    std::remove("fulltest_daily.csv");
+    std::remove("fulltest_daily_extended.csv");
+    std::remove("fulltest_daily_financial.csv");
 
     // ==================== 汇总 ====================
-    std::cout << "\n========================================" << std::endl;
+    LOG_INFO("========================================");
     if (passed) {
-        std::cout << "  全流程检验：全部通过！" << std::endl;
+        LOG_INFO("  全流程检验：全部通过！");
     } else {
-        std::cout << "  全流程检验：存在失败项，请检查上方 [FAIL] 信息" << std::endl;
+        LOG_ERROR("  全流程检验：存在失败项，请检查上方 [FAIL] 信息");
     }
-    std::cout << "========================================\n" << std::endl;
+    LOG_INFO("========================================");
 }

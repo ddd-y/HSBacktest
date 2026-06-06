@@ -14,7 +14,7 @@ GlobalData::GlobalData(const std::vector<std::string>& stock_k_data_files)
 		stock_k_datas.push_back(new StockKData(code));
 	}
 
-	const int changeduration = Configer::GetDataLevelConfiger().GetChangeDuration();
+	const int hold_days = Configer::GetStrategyConfiger().GetHoldDays();
 
 	if (stock_k_datas.empty())
 	{
@@ -22,7 +22,7 @@ GlobalData::GlobalData(const std::vector<std::string>& stock_k_data_files)
 		throw std::runtime_error("No stock data files provided.");
 	}
 	const int total_days = stock_k_datas[0]->get_daily_datas().size();
-	for (int i = PRE_EXTRA_DAYS; i < total_days; i += changeduration)
+	for (int i = PRE_EXTRA_DAYS; i < total_days; i += hold_days)
 	{
 		rebalance_index.push_back(i);
 	}

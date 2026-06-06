@@ -17,8 +17,9 @@ namespace HSBacktest {
     public:
         static Logger& getInstance();
 
-        // 初始化日志，支持自定义日志路径、日志等级、最大文件大小、文件个数
-        void init(const std::string& log_path,
+        // 初始化日志，支持自定义日志名/路径、日志等级、最大文件大小、文件个数
+        // log_basename: 日志文件名或路径（缺目录→logs/，缺后缀→自动补 .log）
+        void init(const std::string& log_basename,
             spdlog::level::level_enum level = spdlog::level::info,
             size_t max_file_size = 10 * 1024 * 1024,
             size_t max_files = 5);

@@ -132,13 +132,18 @@ int TradeExecutor::ExecuteBuy(int stock_index, double price, int target_shares, 
 		}
 		target_shares = adjusted_shares;
 		calc_cost_and_required();
+
+		// 调整后仍超支（极端费率场景）：放弃本次买入
+		if (total_required > data_manager.available_capital) {
+			LOG_WARN("TradeExecutor::ExecuteBuy - still insufficient after adjustment for stock_index={}", stock_index);
+			return 0;
+		}
 	}
 
 	RecordTrade(trade_date, stock_index, true, target_shares, price, cost);
 
 	// 更新账户状态
 	data_manager.available_capital -= total_required;
-	data_manager.total_net_value -= total_required;
 
 	// 更新持仓
 	auto it = std::find_if(data_manager.positions.begin(), data_manager.positions.end(),
@@ -223,13 +228,13 @@ void TradeExecutor::ClosePosition(int stock_index, double price, int trade_date)
 	ExecuteSell(stock_index, price, INT_MAX, trade_date);
 }
 
-void TradeExecutor::CloseAllPositions(const std::vector<int>& trade_dates, const std::vector<double>& prices)
+void TradeExecutor::CloseAllPositions(int trade_date, const std::vector<double>& prices)
 {
 	// 复制一份持仓列表，避免在遍历时修改
 	auto positions_copy = data_manager.positions;
 	for (const auto& pos : positions_copy) {
 		if (pos.stock_index >= 0 && pos.stock_index < static_cast<int>(prices.size())) {
-			ClosePosition(pos.stock_index, prices[pos.stock_index], trade_dates[pos.stock_index]);
+			ClosePosition(pos.stock_index, prices[pos.stock_index], trade_date);
 		}
 	}
 }
@@ -380,13 +385,16 @@ void TradeExecutor::CheckAllStopLossTakeProfit(const std::vector<double>& curren
 
 void TradeExecutor::Rebalance(const std::vector<int>& target_indices,
 	const std::vector<double>& prices,
-	int trade_date,
-	double total_capital)
+	int trade_date)
 {
 	if (prices.empty()) {
 		LOG_ERROR("TradeExecutor::Rebalance - prices vector is empty");
 		return;
 	}
+
+	// 记录调仓前净值，用于计算换手率
+	double pre_nav = data_manager.total_net_value;
+	size_t trade_count_before = data_manager.trade_history.size();
 
 	// 第一步：卖出不在目标列表中的股票
 	auto positions_copy = data_manager.positions;
@@ -412,18 +420,10 @@ void TradeExecutor::Rebalance(const std::vector<int>& target_indices,
 		}
 	}
 
-	if (rebalance_capital <= 0.0) {
-		LOG_WARN("TradeExecutor::Rebalance - no available capital for rebalance");
-		return;
-	}
-
 	// 等权分配到每只目标股票
 	double target_notional_per_stock = rebalance_capital / target_indices.size();
 
 	const auto& strategy_cfg = Configer::GetStrategyConfiger();
-	double single_limit_nv = data_manager.total_net_value * strategy_cfg.GetSinglePositionLimit();
-	double industry_limit_nv = data_manager.total_net_value * strategy_cfg.GetIndustryPositionLimit();
-
 	GlobalData* gd = GlobalData::GetGlobalData();
 
 	for (int idx : target_indices) {
@@ -431,14 +431,31 @@ void TradeExecutor::Rebalance(const std::vector<int>& target_indices,
 		double price = prices[idx];
 		if (price <= 0.0) continue;
 
+		// 每次迭代重算，反映此前 trim 卖出导致的净值变化
+		double single_limit_nv = data_manager.total_net_value * strategy_cfg.GetSinglePositionLimit();
+		double industry_limit_nv = data_manager.total_net_value * strategy_cfg.GetIndustryPositionLimit();
+
 		// 检查是否已持有该股票
 		auto* existing_pos = data_manager.GetPosition(idx);
 		double existing_value = existing_pos ? existing_pos->current_value : 0.0;
 		double remaining_budget = target_notional_per_stock - existing_value;
 
+		// 最大允许持仓 = min(等权目标, 单票仓位上限)
+		double max_allowed = std::min(target_notional_per_stock, single_limit_nv);
+
+		if (existing_value > max_allowed) {
+			// 超目标或超上限：卖出超出部分
+			double excess_notional = existing_value - max_allowed;
+			int trim_shares = static_cast<int>(excess_notional / price);
+			trim_shares = (trim_shares / 100) * 100;
+			if (trim_shares > 0) {
+				ExecuteSell(idx, price, trim_shares, trade_date);
+			}
+			continue;
+		}
 		if (remaining_budget <= 0.0) continue;
 
-		// 单票仓位上限检查
+		// 单票仓位上限检查（此时 existing_value <= max_allowed，受上限约束后允许的买入额）
 		double allowed_notional = std::min(remaining_budget, single_limit_nv - existing_value);
 		if (allowed_notional <= 0.0) continue;
 
@@ -458,7 +475,7 @@ void TradeExecutor::Rebalance(const std::vector<int>& target_indices,
 						}
 					}
 					// 当前股票如果已持有，不减自己的市值（上面 allowed_notional 已包含）
-					double industry_budget = industry_limit_nv - industry_existing + existing_value;
+					double industry_budget = industry_limit_nv - industry_existing;
 					if (industry_budget <= 0.0) {
 						LOG_WARN("TradeExecutor::Rebalance - industry limit reached for stock_idx={} industry={}", idx, ind_code);
 						continue;
@@ -475,6 +492,15 @@ void TradeExecutor::Rebalance(const std::vector<int>& target_indices,
 		if (target_shares <= 0) continue;
 
 		ExecuteBuy(idx, price, target_shares, trade_date);
+	}
+
+	// 计算本次调仓换手率
+	double total_traded = 0.0;
+	for (size_t t = trade_count_before; t < data_manager.trade_history.size(); ++t) {
+		total_traded += data_manager.trade_history[t].price * data_manager.trade_history[t].shares;
+	}
+	if (pre_nav > 0.0) {
+		data_manager.turnover_rates.push_back(total_traded / (2.0 * pre_nav));
 	}
 
 	// 记录调仓后净值快照
@@ -496,6 +522,7 @@ void TradeExecutor::ReInitialize(double init_capital)
 	data_manager.positions.clear();
 	data_manager.trade_history.clear();
 	data_manager.nav_history.clear();
+	data_manager.turnover_rates.clear();
 	SetInitialCapital(init_capital);
 
 	LOG_INFO("TradeExecutor::ReInitialize - reset to init_capital={:.2f}", init_capital);

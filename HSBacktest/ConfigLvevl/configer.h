@@ -92,19 +92,6 @@ public:
     }
 };
 
-class DataLevelConfiger 
-{
-private:
-	int change_duration = 20; // 调仓周期（交易日）
-public:
-    int GetChangeDuration() const { return change_duration; }
-
-    void ReadConfigFromFile(const std::string& filename)
-    {
-        // 实现从JSON文件读取配置的逻辑
-	}
-};
-
 //暂时用不到，后边再说
 class StrategyConfiger
 {
@@ -148,11 +135,15 @@ public:
     double GetMcapWeight() const { return mcap_weight; }
     double GetEpWeight() const { return ep_weight; }
     bool GetAutoNormalizeWeights() const { return auto_normalize_weights; }
-     // 风控规则的Getter
+     // 风控规则的 Getter / Setter
     double GetSinglePositionLimit() const { return single_position_limit; }
+    void SetSinglePositionLimit(double v) { single_position_limit = v; }
     double GetIndustryPositionLimit() const { return industry_position_limit; }
+    void SetIndustryPositionLimit(double v) { industry_position_limit = v; }
     double GetSingleStockStopLoss() const { return single_stock_stop_loss; }
+    void SetSingleStockStopLoss(double v) { single_stock_stop_loss = v; }
     double GetSingleStockTakeProfit() const { return single_stock_take_profit; }
+    void SetSingleStockTakeProfit(double v) { single_stock_take_profit = v; }
     // 收益计算参数的Getter
     double GetRiskFreeRate() const { return risk_free_rate; }
     void ReadConfigFromFile(const std::string& filename)
@@ -190,13 +181,11 @@ public:
 class Configer
 {
 private:
-	DataLevelConfiger data_level_configer;
 	static Configer configer_instance;
 	static StrategyConfiger strategy_configer_instance;
     static TransactionCostConfiger transaction_configer_instance;
     static ParamSearchConfiger param_search_config_instance;
 public:
-	static DataLevelConfiger& GetDataLevelConfiger() { return configer_instance.data_level_configer; }
     static StrategyConfiger& GetStrategyConfiger() { return strategy_configer_instance; }
 	static TransactionCostConfiger& GetTransactionCostConfiger() { return transaction_configer_instance; }
     static ParamSearchConfiger& GetParamSearchConfig() { return param_search_config_instance; }
