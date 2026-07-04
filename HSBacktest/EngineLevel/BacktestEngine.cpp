@@ -79,8 +79,7 @@ void BacktestEngine::Run()
 		return;
 	}
 
-	summary.total_rebalances = static_cast<int>(rebalance_indices.size());
-	summary.initial_capital = initial_capital;
+
 
 	LOG_INFO("BacktestEngine::Run - starting backtest with {} stocks, {} rebalance periods",
 		stock_count, rebalance_indices.size());
@@ -214,18 +213,19 @@ void BacktestEngine::CalculatePerformance()
 	if (nav_history.empty()) return;
 
 	// 基础数据（最终净值从 TradeExecutor 实时读取，反映清仓后的真实状态）
-	summary.final_net_value = trade_executor->GetDataManager().GetTotalNetValue();
-	summary.total_return = (summary.final_net_value - initial_capital) / initial_capital;
-	summary.total_trade_days = static_cast<int>(nav_history.size());
+	double final_net_value = trade_executor->GetDataManager().GetTotalNetValue();
+	double total_return = (final_net_value - initial_capital) / initial_capital;
+	summary.total_return = total_return;
+	int total_trade_days = static_cast<int>(nav_history.size());
 
 	// 计算年化收益率 (交易日=252)
-	// 仅在回撤未超过本金（total_return > -1.0）时年化，否则直接用累计收益
-	double years = static_cast<double>(summary.total_trade_days) / ANNUAL_TRADE_DAYS;
-	if (years > 0.0 && summary.total_return > -1.0) {
-		summary.annual_return = std::pow(1.0 + summary.total_return, 1.0 / years) - 1.0;
+	// 仅在总收益 > -1.0 时年化，否则直接用累计收益
+	double years = static_cast<double>(total_trade_days) / ANNUAL_TRADE_DAYS;
+	if (years > 0.0 && total_return > -1.0) {
+		summary.annual_return = std::pow(1.0 + total_return, 1.0 / years) - 1.0;
 	}
 	else {
-		summary.annual_return = summary.total_return;
+		summary.annual_return = total_return;
 	}
 
 	// 计算年化波动率和夏普比率
@@ -261,7 +261,6 @@ void BacktestEngine::CalculatePerformance()
 			summary.sharpe_ratio = std::sqrt(ANNUAL_TRADE_DAYS) * excess_return / daily_stddev;
 		}
 
-		summary.win_rate = static_cast<double>(positive_days) / daily_returns.size();
 	}
 
 	// 最大回撤
@@ -280,17 +279,13 @@ void BacktestEngine::PrintReport() const
 	LOG_INFO("========================================");
 	LOG_INFO("========== Backtest Report =============");
 	LOG_INFO("========================================");
-	LOG_INFO("Initial Capital:     {:>12.2f}", summary.initial_capital);
-	LOG_INFO("Final Net Value:     {:>12.2f}", summary.final_net_value);
 	LOG_INFO("Total Return:        {:>12.4f}%", summary.total_return * 100.0);
 	LOG_INFO("Annual Return:       {:>12.4f}%", summary.annual_return * 100.0);
 	LOG_INFO("Annual Volatility:   {:>12.4f}%", summary.annual_volatility * 100.0);
 	LOG_INFO("Sharpe Ratio:        {:>12.4f}", summary.sharpe_ratio);
 	LOG_INFO("Max Drawdown:        {:>12.4f}%", summary.max_drawdown * 100.0);
-	LOG_INFO("Win Rate:            {:>12.4f}%", summary.win_rate * 100.0);
-	LOG_INFO("Total Trade Days:    {:>12d}", summary.total_trade_days);
-	LOG_INFO("Total Rebalances:    {:>12d}", summary.total_rebalances);
 	LOG_INFO("Avg Turnover:        {:>12.4f}%", summary.avg_turnover * 100.0);
+	LOG_INFO("Param Index:         {:>12d}", summary.param_index);
 	LOG_INFO("========================================");
 
 }

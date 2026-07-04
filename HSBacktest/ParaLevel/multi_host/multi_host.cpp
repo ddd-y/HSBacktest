@@ -34,28 +34,22 @@ void HostManager::InitMPIRelated()
 
 	// 注册自定义 MPI 类型 BacktestSummary
 	mpi_summary_type = new MPI_Datatype;
-	int s_blocklengths[12] = { 1,1,1,1,1,1,1,1,1,1,1,1 };
-	MPI_Aint s_offsets[12];
-	MPI_Datatype s_types[12] = {
+	int s_blocklengths[7] = { 1,1,1,1,1,1,1 };
+	MPI_Aint s_offsets[7];
+	MPI_Datatype s_types[7] = {
 		MPI_DOUBLE, MPI_DOUBLE, MPI_DOUBLE, MPI_DOUBLE, MPI_DOUBLE,
-		MPI_DOUBLE, MPI_INT,    MPI_INT,    MPI_DOUBLE, MPI_DOUBLE,
 		MPI_DOUBLE, MPI_INT
 	};
 
-	s_offsets[0]  = offsetof(BacktestSummary, total_return);
-	s_offsets[1]  = offsetof(BacktestSummary, annual_return);
-	s_offsets[2]  = offsetof(BacktestSummary, annual_volatility);
-	s_offsets[3]  = offsetof(BacktestSummary, sharpe_ratio);
-	s_offsets[4]  = offsetof(BacktestSummary, max_drawdown);
-	s_offsets[5]  = offsetof(BacktestSummary, win_rate);
-	s_offsets[6]  = offsetof(BacktestSummary, total_trade_days);
-	s_offsets[7]  = offsetof(BacktestSummary, total_rebalances);
-	s_offsets[8]  = offsetof(BacktestSummary, avg_turnover);
-	s_offsets[9]  = offsetof(BacktestSummary, final_net_value);
-	s_offsets[10] = offsetof(BacktestSummary, initial_capital);
-	s_offsets[11] = offsetof(BacktestSummary, param_index);
+	s_offsets[0] = offsetof(BacktestSummary, total_return);
+	s_offsets[1] = offsetof(BacktestSummary, annual_return);
+	s_offsets[2] = offsetof(BacktestSummary, annual_volatility);
+	s_offsets[3] = offsetof(BacktestSummary, sharpe_ratio);
+	s_offsets[4] = offsetof(BacktestSummary, max_drawdown);
+	s_offsets[5] = offsetof(BacktestSummary, avg_turnover);
+	s_offsets[6] = offsetof(BacktestSummary, param_index);
 
-	MPI_Type_create_struct(12, s_blocklengths, s_offsets, s_types, mpi_summary_type);
+	MPI_Type_create_struct(7, s_blocklengths, s_offsets, s_types, mpi_summary_type);
 	MPI_Type_commit(mpi_summary_type);
 }
 

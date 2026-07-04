@@ -11,6 +11,8 @@
 #include"test/backtest_unit_test.h"
 #include"test/multi_host_test.h"
 #include"test/multi_host_e2e_test.h"
+#include"test/functional_test.h"
+#include"test/full_pipeline_test.h"
 
 // ===== 初始化 + 启动（配置从 Configer 读取）=====
 bool InitAndRun()
@@ -65,7 +67,10 @@ int main()
 {
 	Configer::LoadFromFile("config.json");
 
-	if (!InitAndRun())
-		return 1;
+	//run_backtest_unit_test();
+	//functional_test();
+	//if (!InitAndRun())
+		//return 1;
+	run_multi_host_e2e_test();
 	return 0;
 }

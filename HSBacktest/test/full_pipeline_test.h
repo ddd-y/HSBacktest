@@ -164,13 +164,12 @@ void full_pipeline_test()
     engine.Run();
     BacktestSummary s0 = engine.GetSummary();
 
-    TEST_CHECK(s0.total_rebalances > 0, "调仓次数 > 0");
-    TEST_CHECK(s0.total_trade_days > 0, "交易天数 > 0");
-    TEST_CHECK(s0.final_net_value > 0.0, "最终净值 > 0");
-    TEST_CHECK(s0.initial_capital == 1000000.0, "初始资金正确");
+    TEST_CHECK(!std::isnan(s0.annual_return), "年化收益非 NaN");
+    TEST_CHECK(!std::isnan(s0.sharpe_ratio), "夏普非 NaN");
+    TEST_CHECK(s0.max_drawdown >= 0.0, "最大回撤 >= 0");
 
-    LOG_INFO("  第一组绩效: 总收益={:.2f}%, 夏普={:.4f}, 回撤={:.2f}%, 胜率={:.2f}%",
-        s0.total_return * 100, s0.sharpe_ratio, s0.max_drawdown * 100, s0.win_rate * 100);
+    LOG_INFO("  第一组绩效: 年化={:.2f}%, 夏普={:.4f}, 回撤={:.2f}%",
+        s0.annual_return * 100, s0.sharpe_ratio, s0.max_drawdown * 100);
 
     BacktestSummary best = s0;
     int best_idx = 0;
@@ -185,10 +184,9 @@ void full_pipeline_test()
         }
     }
 
-    TEST_CHECK(!std::isnan(best.total_return) && !std::isinf(best.total_return), "最优总收益非 NaN/Inf");
+    TEST_CHECK(!std::isnan(best.annual_return) && !std::isinf(best.annual_return), "最优年化收益非 NaN/Inf");
     TEST_CHECK(!std::isnan(best.sharpe_ratio) && !std::isinf(best.sharpe_ratio), "最优夏普非 NaN/Inf");
     TEST_CHECK(best.max_drawdown >= 0.0 && best.max_drawdown <= 1.0, "最大回撤在 [0, 1] 范围");
-    TEST_CHECK(best.win_rate >= 0.0 && best.win_rate <= 1.0, "胜率在 [0, 1] 范围");
 
     // ==================== 阶段 5：最优参数输出 ====================
     LOG_INFO("--- [阶段5] 最优参数 ---");
@@ -198,12 +196,11 @@ void full_pipeline_test()
     LOG_INFO("  权重: [{:.4f}, {:.4f}, {:.4f}, {:.4f}, {:.4f}]",
         best_weights[0], best_weights[1], best_weights[2], best_weights[3], best_weights[4]);
     LOG_INFO("  选股数: {}", gd->GetTopN(best_idx));
-    LOG_INFO("  总收益: {:.2f}%", best.total_return * 100);
     LOG_INFO("  年化:   {:.2f}%", best.annual_return * 100);
     LOG_INFO("  夏普:   {:.4f}", best.sharpe_ratio);
     LOG_INFO("  回撤:   {:.2f}%", best.max_drawdown * 100);
-    LOG_INFO("  胜率:   {:.2f}%", best.win_rate * 100);
-    LOG_INFO("  净值:   {:.2f}", best.final_net_value);
+    LOG_INFO("  波动率: {:.2f}%", best.annual_volatility * 100);
+    LOG_INFO("  换手率: {:.2f}%", best.avg_turnover * 100);
 
     TEST_CHECK(!std::isnan(best.annual_return), "最优年化收益非 NaN");
 

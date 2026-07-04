@@ -108,14 +108,13 @@ namespace {
 
     // 把 BacktestSummary 序列化成可比较的字符串
     std::string summary_to_key(const BacktestSummary& s) {
-        char buf[512];
+        char buf[448];
         std::snprintf(buf, sizeof(buf),
-            "p%d|%.6f|%.6f|%.6f|%.6f|%.6f|%.6f|%d|%d|%.6f|%.2f|%.2f",
+            "p%d|%.6f|%.6f|%.6f|%.6f|%.6f|%.6f",
             s.param_index,
             s.total_return, s.annual_return, s.annual_volatility,
-            s.sharpe_ratio, s.max_drawdown, s.win_rate,
-            s.total_trade_days, s.total_rebalances,
-            s.avg_turnover, s.final_net_value, s.initial_capital);
+            s.sharpe_ratio, s.max_drawdown,
+            s.avg_turnover);
         return std::string(buf);
     }
 

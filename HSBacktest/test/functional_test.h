@@ -274,10 +274,9 @@ void test_stop_loss_take_profit()
     engine.Run();
 
     BacktestSummary s = engine.GetSummary();
-    FT_CHECK(!std::isnan(s.total_return), "止损场景: 总收益非 NaN");
-    FT_CHECK(!std::isnan(s.sharpe_ratio) || s.total_trade_days < 2, "止损场景: 夏普非 NaN 或交易天数不足");
+    FT_CHECK(!std::isnan(s.annual_return), "止损场景: 年化收益非 NaN");
+    FT_CHECK(!std::isnan(s.sharpe_ratio), "止损场景: 夏普非 NaN");
     FT_CHECK(s.max_drawdown >= 0.0, "止损场景: 最大回撤 ≥ 0");
-    FT_CHECK(s.final_net_value > 0.0, "止损场景: 最终净值 > 0");
 
     const auto& trades = engine.GetTradeExecutor()->GetDataManager().GetTradeHistory();
     int sell_count = 0;
@@ -307,8 +306,7 @@ void test_delisted_and_suspended_filtering()
     engine.Run();
 
     BacktestSummary s = engine.GetSummary();
-    FT_CHECK(s.total_rebalances > 0, "过滤场景: 调仓次数 > 0");
-    FT_CHECK(s.final_net_value > 0.0, "过滤场景: 最终净值 > 0");
+    FT_CHECK(!std::isnan(s.annual_return), "过滤场景: 年化收益非 NaN");
 
     const auto& positions = engine.GetTradeExecutor()->GetDataManager().GetAllPositions();
     FT_CHECK(positions.empty(), "过滤场景: 回测结束持仓已清空");
@@ -341,8 +339,7 @@ void test_position_and_industry_limits()
     engine.Run();
 
     BacktestSummary s = engine.GetSummary();
-    FT_CHECK(!std::isnan(s.total_return), "仓位上限: 总收益非 NaN");
-    FT_CHECK(s.final_net_value > 0.0, "仓位上限: 最终净值 > 0");
+    FT_CHECK(!std::isnan(s.annual_return), "仓位上限: 年化收益非 NaN");
 
     strategy_cfg.SetSinglePositionLimit(orig_single);
     strategy_cfg.SetIndustryPositionLimit(orig_industry);

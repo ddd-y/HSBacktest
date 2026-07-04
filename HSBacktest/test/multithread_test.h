@@ -119,13 +119,11 @@ void multithread_runner_test()
     baseline_engine.Run();
     BacktestSummary baseline = baseline_engine.GetSummary();
 
-    MT_CHECK(baseline.total_rebalances > 0, "单线程基准: 调仓次数 > 0");
-    MT_CHECK(baseline.final_net_value > 0.0, "单线程基准: 最终净值 > 0");
     MT_CHECK(!std::isnan(baseline.sharpe_ratio), "单线程基准: 夏普非 NaN");
     MT_CHECK(!std::isnan(baseline.max_drawdown), "单线程基准: 回撤非 NaN");
 
-    LOG_INFO("  基准绩效: 收益={:.2f}%, 夏普={:.4f}, 回撤={:.2f}%, 净值={:.2f}",
-        baseline.total_return * 100, baseline.sharpe_ratio, baseline.max_drawdown * 100, baseline.final_net_value);
+    LOG_INFO("  基准绩效: 年化={:.2f}%, 夏普={:.4f}, 回撤={:.2f}%",
+        baseline.annual_return * 100, baseline.sharpe_ratio, baseline.max_drawdown * 100);
 
     // ===== 步骤5：多线程 =====
     LOG_INFO("[5/6] 多线程并行回测...");
@@ -166,12 +164,9 @@ void multithread_runner_test()
         BacktestSummary s = engine.GetSummary();
 
         bool ok = true;
-        ok &= !std::isnan(s.total_return) && !std::isinf(s.total_return);
+        ok &= !std::isnan(s.annual_return) && !std::isinf(s.annual_return);
         ok &= !std::isnan(s.sharpe_ratio) && !std::isinf(s.sharpe_ratio);
         ok &= s.max_drawdown >= 0.0 && s.max_drawdown <= 1.0;
-        ok &= s.win_rate >= 0.0 && s.win_rate <= 1.0;
-        ok &= s.final_net_value > 0.0;
-        ok &= s.total_rebalances > 0;
 
         if (ok) results_ok++; else results_fail++;
 
@@ -180,8 +175,8 @@ void multithread_runner_test()
             best_st_idx = i;
         }
 
-        LOG_INFO("  [{:2d}] 收益={:8.2f}%  夏普={:7.4f}  回撤={:7.2f}%  胜率={:6.2f}%",
-            i, s.total_return * 100, s.sharpe_ratio, s.max_drawdown * 100, s.win_rate * 100);
+        LOG_INFO("  [{:2d}] 年化={:8.2f}%  夏普={:7.4f}  回撤={:7.2f}%",
+            i, s.annual_return * 100, s.sharpe_ratio, s.max_drawdown * 100);
     }
 
     MT_CHECK(results_fail == 0, "所有参数组绩效数据合理 (OK=" + std::to_string(results_ok) + ")");
@@ -193,10 +188,9 @@ void multithread_runner_test()
     auto bw = gd->GetWeights(best_st_idx);
     LOG_INFO("  权重: [{:.3f}, {:.3f}, {:.3f}, {:.3f}, {:.3f}]", bw[0], bw[1], bw[2], bw[3], bw[4]);
     LOG_INFO("  top_n: {}", gd->GetTopN(best_st_idx));
-    LOG_INFO("  总收益: {:.2f}%", best_st.total_return * 100);
+    LOG_INFO("  年化:   {:.2f}%", best_st.annual_return * 100);
     LOG_INFO("  夏普:   {:.4f}", best_st.sharpe_ratio);
     LOG_INFO("  回撤:   {:.2f}%", best_st.max_drawdown * 100);
-    LOG_INFO("  净值:   {:.2f}", best_st.final_net_value);
 
     // ===== 清理 =====
     delete PerformanceCollector::GetPerformanceCollector();

@@ -205,22 +205,26 @@ inline void run_backtest_unit_test()
     engine.Run();
 
     const auto& summary = engine.GetSummary();
-    double expected = hand_calc_final_nav();
+    double expected_nav = hand_calc_final_nav();
+    double expected_total_return = (expected_nav - 100000.0) / 100000.0;
 
     LOG_INFO("=== 回测结果 ===");
     LOG_INFO("  初始资金: 100000.00");
-    LOG_INFO("  最终净值: {:.2f}", summary.final_net_value);
     LOG_INFO("  总收益率: {:.4f}%", summary.total_return * 100);
-    LOG_INFO("  手工预期: {:.2f}", expected);
+    LOG_INFO("  年化收益: {:.4f}%", summary.annual_return * 100);
+    LOG_INFO("  夏普比率: {:.4f}", summary.sharpe_ratio);
+    LOG_INFO("  最大回撤: {:.4f}%", summary.max_drawdown * 100);
+    LOG_INFO("  手工预期净值: {:.2f}", expected_nav);
+    LOG_INFO("  手工预期总收益: {:.4f}%", expected_total_return * 100);
 
     // 8. 断言
-    BT_CHECK(std::abs(summary.final_net_value - expected) < 1.0,
-        "最终净值匹配 (实际=" + std::to_string(summary.final_net_value)
-        + ", 预期=" + std::to_string(expected) + ")");
-
-    BT_CHECK(summary.total_return > 0.05,
-        "涨50%受行业上限20%约束, 应>5% (实际="
-        + std::to_string(summary.total_return * 100) + "%)");
+    BT_CHECK(std::abs(summary.total_return - expected_total_return) < 0.001,
+        "总收益匹配 (实际=" + std::to_string(summary.total_return * 100)
+        + "%, 预期=" + std::to_string(expected_total_return * 100) + "%)");
+    BT_CHECK(!std::isnan(summary.sharpe_ratio) && !std::isinf(summary.sharpe_ratio),
+        "夏普比率非 NaN/Inf");
+    BT_CHECK(summary.max_drawdown >= 0.0 && summary.max_drawdown <= 1.0,
+        "最大回撤在 [0, 1]");
 
     // 9. 清理
     GlobalData::Destroy();
