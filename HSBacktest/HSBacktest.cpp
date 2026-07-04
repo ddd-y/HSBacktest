@@ -68,9 +68,9 @@ int main()
 	Configer::LoadFromFile("config.json");
 
 	//run_backtest_unit_test();
-	//functional_test();
+	functional_test();
 	//if (!InitAndRun())
 		//return 1;
-	run_multi_host_e2e_test();
+	//run_multi_host_e2e_test();
 	return 0;
 }

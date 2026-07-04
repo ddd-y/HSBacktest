@@ -2,8 +2,7 @@
 #include<vector>
 #include<array>
 #include"factor_database.h"
-
-constexpr const int FACTOR_NUM = 5;
+#include"factor_registry.h"
 
 class StockDailyData;
 class StockDailyFinancialData;
@@ -15,14 +14,6 @@ class log_mcap;
 class volatility_20;
 class turnover_20;
 
-
-enum FactorType {
-    MOMENTUM_20 = 0,
-    EP_RATIO = 1,
-    LOG_MCAP = 2,
-    VOLATILITY_20 = 3,
-    TURNOVER_20 = 4
-};
 
 class FactorBase
 {

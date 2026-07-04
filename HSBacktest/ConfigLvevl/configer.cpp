@@ -43,16 +43,19 @@ void ParamSearchConfiger::ReadConfigFromFile(const std::string& filename)
         else if (m == "SINGLE_FACTOR") mode = SearchMode::SINGLE_FACTOR;
     }
 
-    read_if_exists(ps, "momentum_weight_min",   momentum_weight_min);
-    read_if_exists(ps, "momentum_weight_max",   momentum_weight_max);
-    read_if_exists(ps, "turnover_weight_min",   turnover_weight_min);
-    read_if_exists(ps, "turnover_weight_max",   turnover_weight_max);
-    read_if_exists(ps, "volatility_weight_min", volatility_weight_min);
-    read_if_exists(ps, "volatility_weight_max", volatility_weight_max);
-    read_if_exists(ps, "mcap_weight_min",       mcap_weight_min);
-    read_if_exists(ps, "mcap_weight_max",       mcap_weight_max);
-    read_if_exists(ps, "ep_weight_min",         ep_weight_min);
-    read_if_exists(ps, "ep_weight_max",         ep_weight_max);
+    // 因子权重范围 —— 从 JSON 数组读取（名字可选，顺序 = 注册表顺序）
+    if (ps.contains("factors") && ps["factors"].is_array()) {
+        int idx = 0;
+        for (const auto& f : ps["factors"]) {
+            if (idx >= (int)weight_mins.size()) break;
+            if (f.is_object()) {
+                read_if_exists(f, "min", weight_mins[idx]);
+                read_if_exists(f, "max", weight_maxs[idx]);
+            }
+            ++idx;
+        }
+    }
+
     read_if_exists(ps, "grid_step",             grid_step);
     read_if_exists(ps, "random_samples",        random_samples);
     read_if_exists(ps, "normalize_weights",     normalize_weights);
@@ -82,11 +85,17 @@ void StrategyConfiger::ReadConfigFromFile(const std::string& filename)
     read_if_exists(s, "hold_days",                hold_days);
     read_if_exists(s, "top_n",                    top_n);
     read_if_exists(s, "min_stocks_per_industry",  min_stocks_per_industry);
-    read_if_exists(s, "momentum_weight",          momentum_weight);
-    read_if_exists(s, "turnover_weight",          turnover_weight);
-    read_if_exists(s, "volatility_weight",        volatility_weight);
-    read_if_exists(s, "mcap_weight",              mcap_weight);
-    read_if_exists(s, "ep_weight",                ep_weight);
+
+    // 因子默认权重 —— 从 JSON 数组读取
+    if (s.contains("factor_weights") && s["factor_weights"].is_array()) {
+        int idx = 0;
+        for (const auto& v : s["factor_weights"]) {
+            if (idx >= (int)default_weights.size()) break;
+            default_weights[idx] = v.get<double>();
+            ++idx;
+        }
+    }
+
     read_if_exists(s, "auto_normalize_weights",   auto_normalize_weights);
     read_if_exists(s, "single_position_limit",    single_position_limit);
     read_if_exists(s, "industry_position_limit",  industry_position_limit);

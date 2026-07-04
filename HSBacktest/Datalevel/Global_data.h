@@ -91,13 +91,10 @@ public:
 			return adjust_params[realIdx].factor_weights;
 
 		// fallback：从 StrategyConfiger 读取默认值
-		return std::array<double, FACTOR_NUM>({
-			Configer::GetStrategyConfiger().GetMomentumWeight(),
-			Configer::GetStrategyConfiger().GetTurnoverWeight(),
-			Configer::GetStrategyConfiger().GetVolatilityWeight(),
-			Configer::GetStrategyConfiger().GetMcapWeight(),
-			Configer::GetStrategyConfiger().GetEpWeight()
-		});
+		std::array<double, FACTOR_NUM> fallback{};
+		for (int i = 0; i < FACTOR_NUM; ++i)
+			fallback[i] = Configer::GetStrategyConfiger().GetDefaultWeight(i);
+		return fallback;
 	}
 
 	/*

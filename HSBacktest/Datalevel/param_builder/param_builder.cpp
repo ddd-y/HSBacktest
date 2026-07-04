@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <numeric>
 #include <cmath>
+#include <functional>
 
 // ===== 便捷方法：默认随机模式 =====
 void ParamBuilder::BuildParamNet(std::vector<AdjustParam>& adjustParams, int randomSamples)
@@ -45,49 +46,47 @@ void ParamBuilder::BuildParamNet(std::vector<AdjustParam>& adjustParams,
 // ===== 网格搜索 =====
 void ParamBuilder::BuildGrid(std::vector<AdjustParam>& out, const ParamSearchConfiger& cfg)
 {
-    //为每个因子生成步长序列
-    auto steps0 = GenerateSteps(cfg.GetMomentumWeightMin(),  cfg.GetMomentumWeightMax(),  cfg.GetGridStep());
-    auto steps1 = GenerateSteps(cfg.GetTurnoverWeightMin(),  cfg.GetTurnoverWeightMax(),  cfg.GetGridStep());
-    auto steps2 = GenerateSteps(cfg.GetVolatilityWeightMin(), cfg.GetVolatilityWeightMax(), cfg.GetGridStep());
-    auto steps3 = GenerateSteps(cfg.GetMcapWeightMin(),      cfg.GetMcapWeightMax(),      cfg.GetGridStep());
-    auto steps4 = GenerateSteps(cfg.GetEpWeightMin(),        cfg.GetEpWeightMax(),        cfg.GetGridStep());
+    int nf = cfg.GetFactorCount();
+    if (nf <= 0) return;
 
-    // 网格组合数爆炸警告
-    {
-        long long estTotal = (long long)steps0.size() * steps1.size() * steps2.size()
-                           * steps3.size() * steps4.size() * cfg.GetTopNCandidates().size();
-        if (estTotal > GRID_EXPLOSION_WARN)
-            LOG_WARN("ParamBuilder::BuildGrid - estimated {} total combinations (>{})", estTotal, (long long)GRID_EXPLOSION_WARN);
+    // 为每个因子生成步长序列
+    std::vector<std::vector<double>> all_steps(nf);
+    long long estTotal = 1;
+    for (int i = 0; i < nf; ++i) {
+        all_steps[i] = GenerateSteps(cfg.GetWeightMin(i), cfg.GetWeightMax(i), cfg.GetGridStep());
+        estTotal *= (long long)all_steps[i].size();
     }
+    estTotal *= cfg.GetTopNCandidates().size();
 
-    for (auto w0 : steps0)
-    for (auto w1 : steps1)
-    for (auto w2 : steps2)
-    for (auto w3 : steps3)
-    for (auto w4 : steps4)
-    {
-        AdjustParam param;
-        param.factor_weights = { w0, w1, w2, w3, w4 };
+    if (estTotal > GRID_EXPLOSION_WARN)
+        LOG_WARN("ParamBuilder::BuildGrid - estimated {} total combinations (>{})", estTotal, (long long)GRID_EXPLOSION_WARN);
 
-        if (cfg.GetNormalizeWeights())
-            NormalizeWeights(param.factor_weights);
+    // 递归生成笛卡尔积
+    AdjustParam current;
+    std::function<void(int)> dfs = [&](int depth) {
+        if (depth == nf) {
+            if (cfg.GetNormalizeWeights())
+                NormalizeWeights(current.factor_weights);
 
-        //如果不允许零权重，跳过含零的组
-        if (!cfg.GetAllowZeroWeight())
-        {
-            bool hasZero = false;
-            for (auto w : param.factor_weights)
-                if (w < 1e-10) { hasZero = true; break; }
-            if (hasZero) continue;
+            if (!cfg.GetAllowZeroWeight()) {
+                for (auto w : current.factor_weights)
+                    if (w < 1e-10) return;
+            }
+
+            for (int tn : cfg.GetTopNCandidates()) {
+                current.top_n = tn;
+                out.push_back(current);
+            }
+            return;
         }
 
-        //为每个权重组合生成所有top_n组合
-        for (int tn : cfg.GetTopNCandidates())
-        {
-            param.top_n = tn;
-            out.push_back(param);
+        for (double w : all_steps[depth]) {
+            current.factor_weights[depth] = w;
+            dfs(depth + 1);
         }
-    }
+    };
+
+    dfs(0);
 }
 
 // ===== 随机采样（Dirichlet分布）=====
@@ -155,13 +154,9 @@ void ParamBuilder::BuildRandom(std::vector<AdjustParam>& out, const ParamSearchC
 void ParamBuilder::BuildSingleFactor(std::vector<AdjustParam>& out, const ParamSearchConfiger& cfg)
 {
     //默认基准权重（各因子范围的中点）
-    std::array<double, FACTOR_NUM> baseline = {
-        (cfg.GetMomentumWeightMin() + cfg.GetMomentumWeightMax()) / 2.0,
-        (cfg.GetTurnoverWeightMin() + cfg.GetTurnoverWeightMax()) / 2.0,
-        (cfg.GetVolatilityWeightMin() + cfg.GetVolatilityWeightMax()) / 2.0,
-        (cfg.GetMcapWeightMin() + cfg.GetMcapWeightMax()) / 2.0,
-        (cfg.GetEpWeightMin() + cfg.GetEpWeightMax()) / 2.0
-    };
+    std::array<double, FACTOR_NUM> baseline{};
+    for (int i = 0; i < FACTOR_NUM; ++i)
+        baseline[i] = (cfg.GetWeightMin(i) + cfg.GetWeightMax(i)) / 2.0;
     if (cfg.GetNormalizeWeights()) NormalizeWeights(baseline);
 
     //依次扫描每个因子
@@ -200,17 +195,7 @@ void ParamBuilder::BuildSingleFactor(std::vector<AdjustParam>& out, const ParamS
 // ===== 辅助方法 =====
 std::pair<double, double> ParamBuilder::GetWeightRange(int factorIdx, const ParamSearchConfiger& cfg)
 {
-    switch (factorIdx)
-    {
-    case 0: return { cfg.GetMomentumWeightMin(),  cfg.GetMomentumWeightMax() };
-    case 1: return { cfg.GetTurnoverWeightMin(),  cfg.GetTurnoverWeightMax() };
-    case 2: return { cfg.GetVolatilityWeightMin(), cfg.GetVolatilityWeightMax() };
-    case 3: return { cfg.GetMcapWeightMin(),      cfg.GetMcapWeightMax() };
-    case 4: return { cfg.GetEpWeightMin(),        cfg.GetEpWeightMax() };
-    default:
-        LOG_ERROR("ParamBuilder::GetWeightRange - invalid factorIdx {} (FACTOR_NUM={}), returning [0,1]", factorIdx, FACTOR_NUM);
-        return { 0.0, 1.0 };
-    }
+    return { cfg.GetWeightMin(factorIdx), cfg.GetWeightMax(factorIdx) };
 }
 
 std::vector<double> ParamBuilder::GenerateSteps(double minVal, double maxVal, double step)
@@ -241,11 +226,9 @@ void ParamBuilder::NormalizeWeights(std::array<double, FACTOR_NUM>& weights)
 std::array<double, FACTOR_NUM> ParamBuilder::SampleDirichlet(
     std::mt19937& rng, const ParamSearchConfiger& cfg, bool normalize)
 {
-    std::array<std::pair<double, double>, FACTOR_NUM> ranges = {
-        GetWeightRange(0, cfg), GetWeightRange(1, cfg),
-        GetWeightRange(2, cfg), GetWeightRange(3, cfg),
-        GetWeightRange(4, cfg)
-    };
+    std::array<std::pair<double, double>, FACTOR_NUM> ranges{};
+    for (int i = 0; i < FACTOR_NUM; ++i)
+        ranges[i] = GetWeightRange(i, cfg);
 
     std::gamma_distribution<double> gamma(1.0, 1.0);
 

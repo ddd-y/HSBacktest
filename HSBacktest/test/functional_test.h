@@ -42,11 +42,7 @@ void test_param_builder_grid()
 
     ParamSearchConfiger cfg;
     cfg.SetMode(ParamSearchConfiger::SearchMode::GRID);
-    cfg.SetMomentumWeightMin(0.0);   cfg.SetMomentumWeightMax(0.5);
-    cfg.SetTurnoverWeightMin(0.0);   cfg.SetTurnoverWeightMax(0.5);
-    cfg.SetVolatilityWeightMin(0.0); cfg.SetVolatilityWeightMax(0.5);
-    cfg.SetMcapWeightMin(0.0);       cfg.SetMcapWeightMax(0.5);
-    cfg.SetEpWeightMin(0.0);         cfg.SetEpWeightMax(0.5);
+    for (int i = 0; i < FACTOR_NUM; ++i) { cfg.SetWeightMin(i, 0.0); cfg.SetWeightMax(i, 0.5); }
     cfg.SetGridStep(0.5);
     cfg.SetTopNCandidates({ 10, 20 });
     cfg.SetNormalizeWeights(true);
@@ -110,11 +106,7 @@ void test_param_builder_all_zero_range()
     ParamSearchConfiger cfg;
     cfg.SetMode(ParamSearchConfiger::SearchMode::RANDOM);
     cfg.SetRandomSamples(5);
-    cfg.SetMomentumWeightMin(0.0);   cfg.SetMomentumWeightMax(0.0);
-    cfg.SetTurnoverWeightMin(0.0);   cfg.SetTurnoverWeightMax(0.0);
-    cfg.SetVolatilityWeightMin(0.0); cfg.SetVolatilityWeightMax(0.0);
-    cfg.SetMcapWeightMin(0.0);       cfg.SetMcapWeightMax(0.0);
-    cfg.SetEpWeightMin(0.0);         cfg.SetEpWeightMax(0.0);
+    for (int i = 0; i < FACTOR_NUM; ++i) { cfg.SetWeightMin(i, 0.0); cfg.SetWeightMax(i, 0.0); }
     cfg.SetTopNCandidates({ 10 });
     cfg.SetNormalizeWeights(true);
     cfg.SetAllowZeroWeight(false);
@@ -132,11 +124,7 @@ void test_param_builder_single_factor()
 
     ParamSearchConfiger cfg;
     cfg.SetMode(ParamSearchConfiger::SearchMode::SINGLE_FACTOR);
-    cfg.SetMomentumWeightMin(0.0);   cfg.SetMomentumWeightMax(1.0);
-    cfg.SetTurnoverWeightMin(0.0);   cfg.SetTurnoverWeightMax(1.0);
-    cfg.SetVolatilityWeightMin(0.0); cfg.SetVolatilityWeightMax(1.0);
-    cfg.SetMcapWeightMin(0.0);       cfg.SetMcapWeightMax(1.0);
-    cfg.SetEpWeightMin(0.0);         cfg.SetEpWeightMax(1.0);
+    for (int i = 0; i < FACTOR_NUM; ++i) { cfg.SetWeightMin(i, 0.0); cfg.SetWeightMax(i, 1.0); }
     cfg.SetGridStep(0.5);
     cfg.SetTopNCandidates({ 20 });
     cfg.SetNormalizeWeights(true);

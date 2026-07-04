@@ -1,9 +1,11 @@
 #pragma once
 #include<string>
 #include<vector>
+#include"../Datalevel/factor_calculate/factor_registry.h"
 
 // ==========================================
 // 参数搜索配置（用于并行参数优化）
+// 因子权重范围通过下标访问，与注册表顺序一致
 // ==========================================
 class ParamSearchConfiger
 {
@@ -13,12 +15,9 @@ public:
 private:
     SearchMode mode = SearchMode::RANDOM;
 
-    //各因子权重范围
-    double momentum_weight_min  = 0.0,  momentum_weight_max  = 1.0;
-    double turnover_weight_min  = 0.0,  turnover_weight_max  = 1.0;
-    double volatility_weight_min = 0.0, volatility_weight_max = 1.0;
-    double mcap_weight_min      = 0.0,  mcap_weight_max      = 1.0;
-    double ep_weight_min        = 0.0,  ep_weight_max        = 1.0;
+    //各因子权重范围（下标 = 注册表顺序）
+    std::vector<double> weight_mins;
+    std::vector<double> weight_maxs;
 
     //网格搜索步长
     double grid_step = 0.1;
@@ -41,35 +40,30 @@ private:
     //RNG种子（0=使用random_device随机种子）
     unsigned int seed = 0;
 
+    // 从注册表初始化默认值
+    void InitFromRegistry() {
+        const auto& reg = GetFactorRegistry();
+        weight_mins.resize(reg.size());
+        weight_maxs.resize(reg.size());
+        for (size_t i = 0; i < reg.size(); ++i) {
+            weight_mins[i] = reg[i].weight_min;
+            weight_maxs[i] = reg[i].weight_max;
+        }
+    }
+
 public:
+    ParamSearchConfiger() { InitFromRegistry(); }
+
     // Getter / Setter
     SearchMode GetMode() const { return mode; }
     void SetMode(SearchMode m) { mode = m; }
 
-    double GetMomentumWeightMin() const { return momentum_weight_min; }
-    void SetMomentumWeightMin(double v) { momentum_weight_min = v; }
-    double GetMomentumWeightMax() const { return momentum_weight_max; }
-    void SetMomentumWeightMax(double v) { momentum_weight_max = v; }
-
-    double GetTurnoverWeightMin() const { return turnover_weight_min; }
-    void SetTurnoverWeightMin(double v) { turnover_weight_min = v; }
-    double GetTurnoverWeightMax() const { return turnover_weight_max; }
-    void SetTurnoverWeightMax(double v) { turnover_weight_max = v; }
-
-    double GetVolatilityWeightMin() const { return volatility_weight_min; }
-    void SetVolatilityWeightMin(double v) { volatility_weight_min = v; }
-    double GetVolatilityWeightMax() const { return volatility_weight_max; }
-    void SetVolatilityWeightMax(double v) { volatility_weight_max = v; }
-
-    double GetMcapWeightMin() const { return mcap_weight_min; }
-    void SetMcapWeightMin(double v) { mcap_weight_min = v; }
-    double GetMcapWeightMax() const { return mcap_weight_max; }
-    void SetMcapWeightMax(double v) { mcap_weight_max = v; }
-
-    double GetEpWeightMin() const { return ep_weight_min; }
-    void SetEpWeightMin(double v) { ep_weight_min = v; }
-    double GetEpWeightMax() const { return ep_weight_max; }
-    void SetEpWeightMax(double v) { ep_weight_max = v; }
+    // 因子权重范围 —— 通用接口（下标 = 注册表顺序）
+    double GetWeightMin(int idx) const { return (idx >= 0 && idx < (int)weight_mins.size()) ? weight_mins[idx] : 0.0; }
+    void   SetWeightMin(int idx, double v) { if (idx >= 0 && idx < (int)weight_mins.size()) weight_mins[idx] = v; }
+    double GetWeightMax(int idx) const { return (idx >= 0 && idx < (int)weight_maxs.size()) ? weight_maxs[idx] : 1.0; }
+    void   SetWeightMax(int idx, double v) { if (idx >= 0 && idx < (int)weight_maxs.size()) weight_maxs[idx] = v; }
+    int    GetFactorCount() const { return static_cast<int>(weight_mins.size()); }
 
     double GetGridStep() const { return grid_step; }
     void SetGridStep(double v) { grid_step = v; }
@@ -100,20 +94,12 @@ class StrategyConfiger
 {
     // ===== 调仓参数 =====
     int hold_days = 20;                  // 调仓周期（交易日）
-    //暂时不支持调仓方式可选
-    // std::string RebalanceType = "FIXED_INTERVAL"; // 调仓方式：FIXED_INTERVAL(固定间隔)/MONTH_START(月初)
     int top_n = 50;                      // 选股数量
     int min_stocks_per_industry = 1;      // 每个行业最少选股数（行业中性化选股）
-	//暂时不支持加仓权方式可选
-    // std::string WeightingMethod = "EQUAL_WEIGHT"; // 持仓加权方式：EQUAL_WEIGHT(等权)/MARKET_CAP_WEIGHT(市值加权)
 
-    // ===== 完整因子权重体系（与DataLevelConfiger的因子开关一一对应） =====
-    double momentum_weight = 0.2;
-    double turnover_weight = 0.1;
-    double volatility_weight = 0.1;
-    double mcap_weight = 0.3;
-    double ep_weight = 0.3;
-    // 新增：权重自动归一化开关
+    // ===== 因子默认权重（下标 = 注册表顺序，从 registry 初始化）=====
+    std::vector<double> default_weights;
+    // 权重自动归一化开关
     bool auto_normalize_weights = true;
 
     // ===== 完整风控规则 =====
@@ -124,21 +110,28 @@ class StrategyConfiger
 
     // ===== 收益计算参数 =====
     double risk_free_rate = 0.03;         // 无风险利率（年化3%）
+
+    void InitFromRegistry() {
+        const auto& reg = GetFactorRegistry();
+        default_weights.resize(reg.size());
+        for (size_t i = 0; i < reg.size(); ++i)
+            default_weights[i] = reg[i].default_weight;
+    }
+
 public:
-    // Getter方法保持不变，补充新参数的Getter
+    StrategyConfiger() { InitFromRegistry(); }
+
     int GetHoldDays() const { return hold_days; }
-    //std::string GetRebalanceType() { return RebalanceType; }
     int GetTopN() const { return top_n; }
-    //std::string GetWeightingMethod() { return WeightingMethod; }
     int GetMinStocksPerIndustry() const { return min_stocks_per_industry; }
-    // 因子权重Getter\r
-    double GetMomentumWeight() const { return momentum_weight; }
-    double GetTurnoverWeight() const { return turnover_weight; }
-    double GetVolatilityWeight() const { return volatility_weight; }
-    double GetMcapWeight() const { return mcap_weight; }
-    double GetEpWeight() const { return ep_weight; }
-    bool GetAutoNormalizeWeights() const { return auto_normalize_weights; }
-     // 风控规则的 Getter / Setter
+
+    // 因子权重 —— 通用接口（下标 = 注册表顺序）
+    double GetDefaultWeight(int idx) const { return (idx >= 0 && idx < (int)default_weights.size()) ? default_weights[idx] : 0.0; }
+    void   SetDefaultWeight(int idx, double v) { if (idx >= 0 && idx < (int)default_weights.size()) default_weights[idx] = v; }
+    int    GetFactorCount() const { return static_cast<int>(default_weights.size()); }
+    bool   GetAutoNormalizeWeights() const { return auto_normalize_weights; }
+
+    // 风控规则的 Getter / Setter
     double GetSinglePositionLimit() const { return single_position_limit; }
     void SetSinglePositionLimit(double v) { single_position_limit = v; }
     double GetIndustryPositionLimit() const { return industry_position_limit; }
@@ -211,4 +204,3 @@ public:
     // 从 JSON 配置文件加载所有配置
     static void LoadFromFile(const std::string& filename);
 };
-
