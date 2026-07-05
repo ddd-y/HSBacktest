@@ -58,6 +58,7 @@ public:
 	// 任务分发入口：Phase1 工作窃取 → Phase2 MPI_Gatherv
 	void distribute_task();
 
+	bool IfMaster() const { return rank == 0; }
 #ifndef NDEBUG
 	// ===== 测试辅助（仅 Debug 构建）=====
 	void SetRankAndSizeForTest(int r, int sz) { rank = r; rank_size = sz; }

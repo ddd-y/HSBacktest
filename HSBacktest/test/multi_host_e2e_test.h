@@ -26,6 +26,7 @@
 #include <set>
 #include <cstdio>
 
+#ifndef NDEBUG
 // 与 backtest_unit_test.h 共享的合成数据生成逻辑
 // 这里内联一份，避免头文件依赖
 namespace {
@@ -274,3 +275,4 @@ inline void run_multi_host_e2e_test()
 
     GlobalData::Destroy();
 }
+#endif // NDEBUG

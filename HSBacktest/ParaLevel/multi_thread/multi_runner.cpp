@@ -15,7 +15,7 @@ void MultiRunner::MultiRun(int offset)
 	if (cpu_num > adjustparamnum) cpu_num = adjustparamnum;
 
 	omp_set_num_threads(cpu_num);
-
+	LOG_INFO("{} threads start",cpu_num);
 	std::vector<BacktestEngine*> Engines(cpu_num);
 
 	double init_capital = Configer::GetInitCapital();

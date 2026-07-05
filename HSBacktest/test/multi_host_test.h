@@ -18,6 +18,8 @@
 #include <numeric>
 #include <set>
 
+#ifndef NDEBUG
+
 #define MH_CHECK(cond, msg) \
     do { \
         if (!(cond)) { \
@@ -112,3 +114,5 @@ inline void run_multi_host_unit_tests()
     if (mh_all_passed) LOG_INFO("========== 全部通过! ==========");
     else              LOG_ERROR("========== 存在失败项! ==========");
 }
+
+#endif // NDEBUG

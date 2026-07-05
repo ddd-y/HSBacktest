@@ -27,4 +27,5 @@ find_package(OpenMP REQUIRED)
 find_package(MPI REQUIRED)
 target_link_libraries(HSBacktest PUBLIC fmt::fmt spdlog::spdlog OpenMP::OpenMP_CXX MPI::MPI_CXX)
 target_link_directories(HSBacktest PUBLIC ${CMAKE_SOURCE_DIR}/lib)
+target_compile_options(HSBacktest PRIVATE -Wno-stringop-overflow)
 # TODO: 如有需要，请添加测试并安装目标。

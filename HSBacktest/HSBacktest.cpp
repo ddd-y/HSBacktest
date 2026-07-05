@@ -24,7 +24,7 @@ bool InitAndRun()
 		bool use_mpi = Configer::GetUseMpi();
 
 		// 1. 日志系统（最早初始化）
-		HSBacktest::Logger::getInstance().init(Configer::GetLogPath(), spdlog::level::warn);
+		HSBacktest::Logger::getInstance().init(Configer::GetLogPath(), spdlog::level::info);
 		LOG_INFO("=== HSBacktest starting (mode={}) ===", use_mpi ? "MPI" : "single-machine");
 
 		// 2. 全局数据（加载K线 + 计算因子 + 构建参数组合）
@@ -45,7 +45,7 @@ bool InitAndRun()
 			host_mgr.InitMPIRelated();
 			host_mgr.distribute_task();
 
-			if (host_mgr.GetRank() == 0)
+			if (host_mgr.IfMaster())
 			{
 				LOG_INFO("=== HSBacktest finished, {} total summaries ===",
 					PerformanceCollector::GetPerformanceCollector()->GetTotalSummaryCount());
