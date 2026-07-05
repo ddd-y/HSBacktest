@@ -170,7 +170,7 @@ int TradeExecutor::ExecuteBuy(int stock_index, double price, int target_shares, 
 
 	RecalcNetValue();
 
-	LOG_INFO("BUY  | date={} | stock_idx={} | shares={} | price={:.2f} | cost={:.2f} | cash={:.2f}",
+	LOG_DEBUG("BUY  | date={} | stock_idx={} | shares={} | price={:.2f} | cost={:.2f} | cash={:.2f}",
 		trade_date, stock_index, target_shares, price, cost.total, data_manager.available_capital);
 
 	return target_shares;
@@ -217,7 +217,7 @@ int TradeExecutor::ExecuteSell(int stock_index, double price, int target_shares,
 
 	RecalcNetValue();
 
-	LOG_INFO("SELL | date={} | stock_idx={} | shares={} | price={:.2f} | cost={:.2f} | proceeds={:.2f} | cash={:.2f}",
+	LOG_DEBUG("SELL | date={} | stock_idx={} | shares={} | price={:.2f} | cost={:.2f} | proceeds={:.2f} | cash={:.2f}",
 		trade_date, stock_index, actual_shares, price, cost.total, proceeds, data_manager.available_capital);
 
 	return actual_shares;
@@ -334,7 +334,7 @@ void TradeExecutor::ProcessCorporateActions(int stock_index, int date_abs_idx)
 		it->shares = static_cast<int>(it->shares * fin.split_ratio);
 		it->avg_cost /= fin.split_ratio; // 成本按比例下调
 
-		LOG_INFO("CORP_ACT SPLIT | date_abs={} | stock_idx={} | split_ratio={:.4f} | shares {} -> {} | avg_cost {:.4f} -> {:.4f}",
+		LOG_DEBUG("CORP_ACT SPLIT | date_abs={} | stock_idx={} | split_ratio={:.4f} | shares {} -> {} | avg_cost {:.4f} -> {:.4f}",
 			date_abs_idx, stock_index, fin.split_ratio,
 			old_shares, it->shares,
 			old_shares > 0 ? it->avg_cost * fin.split_ratio : 0.0, it->avg_cost);
@@ -350,7 +350,7 @@ void TradeExecutor::ProcessCorporateActions(int stock_index, int date_abs_idx)
 		// 分红计入已实现盈亏
 		it->pnl += dividend;
 
-		LOG_INFO("CORP_ACT DIVIDEND | date_abs={} | stock_idx={} | dividend_per_share={:.4f} | shares={} | total_dividend={:.2f} | cash={:.2f}",
+		LOG_DEBUG("CORP_ACT DIVIDEND | date_abs={} | stock_idx={} | dividend_per_share={:.4f} | shares={} | total_dividend={:.2f} | cash={:.2f}",
 			date_abs_idx, stock_index, fin.cash_dividend, it->shares, dividend, data_manager.available_capital);
 	}
 }
@@ -374,7 +374,7 @@ void TradeExecutor::CheckAllStopLossTakeProfit(const std::vector<double>& curren
 		// 止损检查
 		RiskCheckResult sl_result = CheckStopLoss(pos, price);
 		if (!sl_result.passed) {
-			LOG_WARN("STOP LOSS triggered: {}", sl_result.reason);
+			LOG_DEBUG("STOP LOSS triggered: {}", sl_result.reason);
 			ClosePosition(pos.stock_index, price, trade_date);
 			continue;
 		}
@@ -382,7 +382,7 @@ void TradeExecutor::CheckAllStopLossTakeProfit(const std::vector<double>& curren
 		// 止盈检查
 		RiskCheckResult tp_result = CheckTakeProfit(pos, price);
 		if (!tp_result.passed) {
-			LOG_INFO("TAKE PROFIT triggered: {}", tp_result.reason);
+			LOG_DEBUG("TAKE PROFIT triggered: {}", tp_result.reason);
 			ClosePosition(pos.stock_index, price, trade_date);
 		}
 	}
@@ -482,7 +482,7 @@ void TradeExecutor::Rebalance(const std::vector<int>& target_indices,
 					// 当前股票如果已持有，不减自己的市值（上面 allowed_notional 已包含）
 					double industry_budget = industry_limit_nv - industry_existing;
 					if (industry_budget <= 0.0) {
-						LOG_WARN("TradeExecutor::Rebalance - industry limit reached for stock_idx={} industry={}", idx, ind_code);
+						LOG_DEBUG("TradeExecutor::Rebalance - industry limit reached for stock_idx={} industry={}", idx, ind_code);
 						continue;
 					}
 					allowed_notional = std::min(allowed_notional, industry_budget);
@@ -508,7 +508,7 @@ void TradeExecutor::Rebalance(const std::vector<int>& target_indices,
 		data_manager.turnover_rates.push_back(total_traded / (2.0 * pre_nav));
 	}
 
-	LOG_INFO("REBALANCE | date={} | target_count={} | cash_after={:.2f} | nav={:.2f}",
+	LOG_DEBUG("REBALANCE | date={} | target_count={} | cash_after={:.2f} | nav={:.2f}",
 		trade_date, target_indices.size(), data_manager.available_capital, data_manager.total_net_value);
 }
 
@@ -527,5 +527,5 @@ void TradeExecutor::ReInitialize(double init_capital)
 	data_manager.turnover_rates.clear();
 	SetInitialCapital(init_capital);
 
-	LOG_INFO("TradeExecutor::ReInitialize - reset to init_capital={:.2f}", init_capital);
+	LOG_DEBUG("TradeExecutor::ReInitialize - reset to init_capital={:.2f}", init_capital);
 }

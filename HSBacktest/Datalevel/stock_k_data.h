@@ -21,6 +21,7 @@ public:
 	// 获取行业代码
 	int32_t GetIndustryCode() const { return industry_code; }
 
+	const std::string GetStockCode() const { return stock_code; }
 	const std::vector<StockDailyData>& get_daily_datas() const { return daily_datas; }
 	const std::vector<StockDailyExtendedData>& get_extended_datas() const { return extended_datas; }
 	const std::vector<StockDailyFinancialData>& get_financial_datas() const { return financial_datas; }

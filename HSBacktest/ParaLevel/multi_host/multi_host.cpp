@@ -187,7 +187,7 @@ void HostManager::work_stealing_loop()
 				MPI_Recv(&dummy, 1, MPI_INT, status.MPI_SOURCE,
 				         TAG_DONE, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 				done_count++;
-				LOG_INFO("MPI rank 0: received DONE from rank {} (total done={}/{})",
+				LOG_DEBUG("MPI rank 0: received DONE from rank {} (total done={}/{})",
 					status.MPI_SOURCE, done_count, rank_size);
 			}
 		}
@@ -227,7 +227,7 @@ void HostManager::work_stealing_loop()
 			TaskRange task = task_queue_.back();
 			task_queue_.pop_back();
 
-			LOG_INFO("MPI rank {}: computing task [{}, {}), {} left in queue",
+			LOG_DEBUG("MPI rank {}: computing task [{}, {}), {} left in queue",
 				rank, task.start, task.end, task_queue_.size());
 
 			gd->MPI_ChangeDataRange(task.start, task.end);
@@ -279,7 +279,7 @@ void HostManager::service_incoming_steals()
 		// 决定给多少：ceil(queue_size / 2)，从前端取（FIFO = 最老的任务）
 		int give = (static_cast<int>(task_queue_.size()) + 1) / 2;
 
-		LOG_INFO("MPI rank {}: steal request from rank {}, giving {} tasks (have {})",
+		LOG_DEBUG("MPI rank {}: steal request from rank {}, giving {} tasks (have {})",
 			rank, thief, give, task_queue_.size());
 
 		// 先发 count
@@ -308,7 +308,7 @@ void HostManager::initiate_steal()
 	steal_target_ = pick_random_victim();
 	if (steal_target_ < 0) return;  // 没有可偷的对象
 
-	LOG_INFO("MPI rank {}: attempting to steal from rank {}", rank, steal_target_);
+	LOG_DEBUG("MPI rank {}: attempting to steal from rank {}", rank, steal_target_);
 
 	int dummy = 0;
 	MPI_Isend(&dummy, 1, MPI_INT, steal_target_, TAG_STEAL_REQ,
@@ -344,7 +344,7 @@ void HostManager::check_steal_response()
 		for (auto& t : batch)
 			task_queue_.push_back(t);
 
-		LOG_INFO("MPI rank {}: stole {} tasks from rank {}, now have {}",
+		LOG_DEBUG("MPI rank {}: stole {} tasks from rank {}, now have {}",
 			rank, count, steal_target_, task_queue_.size());
 
 		// 窃取成功 → 重置 victim 标记（被偷的 victim 可能还有剩余）
@@ -357,7 +357,7 @@ void HostManager::check_steal_response()
 		// 这是简化版终止检测的已知局限——最坏情况下本进程提前空闲，
 		// 但 victim 最终会完成并报告 DONE，不影响全局终止的正确性。
 		victim_empty_[steal_target_] = true;
-		LOG_INFO("MPI rank {}: steal from rank {} returned empty", rank, steal_target_);
+		LOG_DEBUG("MPI rank {}: steal from rank {} returned empty", rank, steal_target_);
 	}
 
 	// 清理 Isend handle
@@ -405,7 +405,7 @@ bool HostManager::all_victims_known_empty() const
 // ===================================================================
 void HostManager::report_done()
 {
-	LOG_INFO("MPI rank {}: all victims empty + local queue empty, reporting DONE", rank);
+	LOG_DEBUG("MPI rank {}: all victims empty + local queue empty, reporting DONE", rank);
 
 	if (rank != 0)
 	{

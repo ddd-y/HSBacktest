@@ -13,6 +13,7 @@
 #include"test/multi_host_e2e_test.h"
 #include"test/functional_test.h"
 #include"test/full_pipeline_test.h"
+#include"AnalysisLevel/analysis_engine.h"
 
 // ===== 初始化 + 启动（配置从 Configer 读取）=====
 bool InitAndRun()
@@ -23,7 +24,7 @@ bool InitAndRun()
 		bool use_mpi = Configer::GetUseMpi();
 
 		// 1. 日志系统（最早初始化）
-		HSBacktest::Logger::getInstance().init(Configer::GetLogPath());
+		HSBacktest::Logger::getInstance().init(Configer::GetLogPath(), spdlog::level::warn);
 		LOG_INFO("=== HSBacktest starting (mode={}) ===", use_mpi ? "MPI" : "single-machine");
 
 		// 2. 全局数据（加载K线 + 计算因子 + 构建参数组合）
@@ -43,14 +44,28 @@ bool InitAndRun()
 			HostManager host_mgr;
 			host_mgr.InitMPIRelated();
 			host_mgr.distribute_task();
+
+			if (host_mgr.GetRank() == 0)
+			{
+				LOG_INFO("=== HSBacktest finished, {} total summaries ===",
+					PerformanceCollector::GetPerformanceCollector()->GetTotalSummaryCount());
+
+				// 5. 统计分析（仅 rank 0）
+				auto all_summaries = PerformanceCollector::GetPerformanceCollector()->TakeAllSummaries();
+				AnalysisEngine::RunAll(all_summaries, Configer::GetInitCapital());
+			}
 		}
 		else
 		{
 			MultiRunner::MultiRun();
-		}
 
-		LOG_INFO("=== HSBacktest finished, {} total summaries ===",
-			PerformanceCollector::GetPerformanceCollector()->GetTotalSummaryCount());
+			LOG_INFO("=== HSBacktest finished, {} total summaries ===",
+				PerformanceCollector::GetPerformanceCollector()->GetTotalSummaryCount());
+
+			// 5. 统计分析
+			auto all_summaries = PerformanceCollector::GetPerformanceCollector()->TakeAllSummaries();
+			AnalysisEngine::RunAll(all_summaries, Configer::GetInitCapital());
+		}
 
 		GlobalData::Destroy();
 		return true;
@@ -68,9 +83,9 @@ int main()
 	Configer::LoadFromFile("config.json");
 
 	//run_backtest_unit_test();
-	functional_test();
-	//if (!InitAndRun())
-		//return 1;
+	//functional_test();
+	if (!InitAndRun())
+		return 1;
 	//run_multi_host_e2e_test();
 	return 0;
 }

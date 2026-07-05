@@ -33,7 +33,7 @@ void BacktestEngine::Initialize(double init_capital, int adjust_param_index)
 
 	is_initialized = true;
 
-	LOG_INFO("BacktestEngine initialized | init_capital={:.2f} |  top_n={} | adjustParamIndex={}",
+	LOG_DEBUG("BacktestEngine initialized | init_capital={:.2f} |  top_n={} | adjustParamIndex={}",
 		init_capital, top_n, adjustParamIndex);
 }
 
@@ -54,7 +54,7 @@ void BacktestEngine::ReInitialize(double init_capital, int adjust_param_index)
 
 	int top_n = GlobalData::GetGlobalData() ? GlobalData::GetGlobalData()->GetTopN(adjustParamIndex) : 50;
 
-	LOG_INFO("BacktestEngine reinitialized | init_capital={:.2f} | top_n={} | adjustParamIndex={}",
+	LOG_DEBUG("BacktestEngine reinitialized | init_capital={:.2f} | top_n={} | adjustParamIndex={}",
 		init_capital, top_n, adjustParamIndex);
 }
 
@@ -81,7 +81,7 @@ void BacktestEngine::Run()
 
 
 
-	LOG_INFO("BacktestEngine::Run - starting backtest with {} stocks, {} rebalance periods",
+	LOG_DEBUG("BacktestEngine::Run - starting backtest with {} stocks, {} rebalance periods",
 		stock_count, rebalance_indices.size());
 
 	// === 主循环：遍历每个调仓日 ===
@@ -94,7 +94,7 @@ void BacktestEngine::Run()
 		std::vector<double> close_prices = GetAllStockClosePrices(date_abs_idx);
 
 		int32_t trade_date = gd->get_dates()[date_abs_idx];
-		LOG_INFO("=== Rebalance #{} | date={} | date_idx={} ===",
+		LOG_DEBUG("=== Rebalance #{} | date={} | date_idx={} ===",
 			rb_idx, trade_date, date_abs_idx);
 
 		// 选股 + 调仓（失败不影响逐日处理）
@@ -115,7 +115,7 @@ void BacktestEngine::Run()
 			}
 		}
 		else {
-			LOG_WARN("No stocks selected at rebalance #{}", rb_idx);
+			LOG_DEBUG("No stocks selected at rebalance #{}", rb_idx);
 		}
 
 		// 记录调仓日净值快照（无论选股/调仓是否成功）
@@ -144,9 +144,9 @@ void BacktestEngine::Run()
 	trade_executor->RecordDailySnapshot(dates[last_idx]);
 
 	CalculatePerformance();
-	PrintReport();
+	//PrintReport();
 
-	LOG_INFO("BacktestEngine::Run - backtest completed");
+	LOG_DEBUG("BacktestEngine::Run - backtest completed");
 }
 
 void BacktestEngine::ProcessDailyLoop(int from_idx, int to_idx)
@@ -276,17 +276,17 @@ void BacktestEngine::CalculatePerformance()
 
 void BacktestEngine::PrintReport() const
 {
-	LOG_INFO("========================================");
-	LOG_INFO("========== Backtest Report =============");
-	LOG_INFO("========================================");
-	LOG_INFO("Total Return:        {:>12.4f}%", summary.total_return * 100.0);
-	LOG_INFO("Annual Return:       {:>12.4f}%", summary.annual_return * 100.0);
-	LOG_INFO("Annual Volatility:   {:>12.4f}%", summary.annual_volatility * 100.0);
-	LOG_INFO("Sharpe Ratio:        {:>12.4f}", summary.sharpe_ratio);
-	LOG_INFO("Max Drawdown:        {:>12.4f}%", summary.max_drawdown * 100.0);
-	LOG_INFO("Avg Turnover:        {:>12.4f}%", summary.avg_turnover * 100.0);
-	LOG_INFO("Param Index:         {:>12d}", summary.param_index);
-	LOG_INFO("========================================");
+	LOG_DEBUG("========================================");
+	LOG_DEBUG("========== Backtest Report =============");
+	LOG_DEBUG("========================================");
+	LOG_DEBUG("Total Return:        {:>12.4f}%", summary.total_return * 100.0);
+	LOG_DEBUG("Annual Return:       {:>12.4f}%", summary.annual_return * 100.0);
+	LOG_DEBUG("Annual Volatility:   {:>12.4f}%", summary.annual_volatility * 100.0);
+	LOG_DEBUG("Sharpe Ratio:        {:>12.4f}", summary.sharpe_ratio);
+	LOG_DEBUG("Max Drawdown:        {:>12.4f}%", summary.max_drawdown * 100.0);
+	LOG_DEBUG("Avg Turnover:        {:>12.4f}%", summary.avg_turnover * 100.0);
+	LOG_DEBUG("Param Index:         {:>12d}", summary.param_index);
+	LOG_DEBUG("========================================");
 
 }
 
@@ -319,7 +319,7 @@ void BacktestEngine::ExportNavToCsv(const std::string& filename) const
 			<< snap.cumulative_return << std::endl;
 	}
 
-	LOG_INFO("BacktestEngine::ExportNavToCsv - exported {} records to {}", nav_history.size(), filename);
+	LOG_DEBUG("BacktestEngine::ExportNavToCsv - exported {} records to {}", nav_history.size(), filename);
 }
 
 void BacktestEngine::ExportTradesToCsv(const std::string& filename) const
@@ -341,10 +341,11 @@ void BacktestEngine::ExportTradesToCsv(const std::string& filename) const
 		return;
 	}
 
-	ofs << "trade_date,stock_index,side,shares,price,commission,stamp_duty,transfer_fee,slippage,total_cost" << std::endl;
+	ofs << "trade_date,stock_code,side,shares,price,commission,stamp_duty,transfer_fee,slippage,total_cost" << std::endl;
 	for (const auto& trade : trade_history) {
+		const std::string tstock_code = GlobalData::GetGlobalData()->get_stock_k_data(trade.stock_index)->GetStockCode();
 		ofs << trade.trade_date << ","
-			<< trade.stock_index << ","
+			<< tstock_code << ","
 			<< (trade.is_buy ? "BUY" : "SELL") << ","
 			<< trade.shares << ","
 			<< std::fixed << std::setprecision(2) << trade.price << ","
@@ -355,5 +356,5 @@ void BacktestEngine::ExportTradesToCsv(const std::string& filename) const
 			<< trade.total_cost << std::endl;
 	}
 
-	LOG_INFO("BacktestEngine::ExportTradesToCsv - exported {} records to {}", trade_history.size(), filename);
+	LOG_DEBUG("BacktestEngine::ExportTradesToCsv - exported {} records to {}", trade_history.size(), filename);
 }

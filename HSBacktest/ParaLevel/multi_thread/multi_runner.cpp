@@ -31,7 +31,7 @@ void MultiRunner::MultiRun(int offset)
 	for (int i = 0; i < adjustparamnum; ++i)
 	{
 		int tid = omp_get_thread_num();
-		LOG_INFO("当前的线程号是：{}",tid);
+		LOG_DEBUG("当前的线程号是：{}",tid);
 		const int cpu_serial_num = i / chunk_size % cpu_num;
 		Engines[cpu_serial_num]->ReInitialize(init_capital, i);
 		Engines[cpu_serial_num]->Run();

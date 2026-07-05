@@ -101,7 +101,7 @@ std::vector<StockScoreRecord> StockSelector::ScoreAllStocks(int rebalance_idx) c
 			++tradable_count;
 		}
 	}
-	LOG_INFO("StockSelector::ScoreAllStocks - {} / {} stocks are tradable at rebalance_idx={}",
+	LOG_DEBUG("StockSelector::ScoreAllStocks - {} / {} stocks are tradable at rebalance_idx={}",
 		tradable_count, stock_count, rebalance_idx);
 
 	// 第二步：获取权重（直接从 GlobalData 拿）
@@ -170,7 +170,7 @@ std::vector<int> StockSelector::SelectTopN(const std::vector<StockScoreRecord>& 
 		selected[i] = sorted[i].stock_index;
 	}
 
-	LOG_INFO("StockSelector::SelectTopN - selected {} stocks from {} candidates", n, scores.size());
+	LOG_DEBUG("StockSelector::SelectTopN - selected {} stocks from {} candidates", n, scores.size());
 	return selected;
 }
 
@@ -196,7 +196,7 @@ std::vector<int> StockSelector::SelectIndustryNeutral(
 	int num_industries = static_cast<int>(industry_groups.size());
 	if (num_industries <= 1) {
 		// 只有一个行业或没有行业数据，回退到全局排名
-		LOG_INFO("StockSelector::SelectIndustryNeutral - only {} industry group(s), fallback to global ranking", num_industries);
+		LOG_DEBUG("StockSelector::SelectIndustryNeutral - only {} industry group(s), fallback to global ranking", num_industries);
 		return SelectTopN(scores, total_target);
 	}
 
@@ -257,7 +257,7 @@ std::vector<int> StockSelector::SelectIndustryNeutral(
 	for (auto& [ind, count] : industry_pick_count) {
 		industry_log += "ind=" + std::to_string(ind) + ":" + std::to_string(count) + " ";
 	}
-	LOG_INFO("StockSelector::SelectIndustryNeutral - {} industries, selected {} stocks (target={}, min_per_ind={}) | {}",
+	LOG_DEBUG("StockSelector::SelectIndustryNeutral - {} industries, selected {} stocks (target={}, min_per_ind={}) | {}",
 		num_industries, result.size(), total_target, effective_min, industry_log);
 
 	return result;
@@ -280,7 +280,7 @@ std::vector<int> StockSelector::ScoreAndSelect(int rebalance_idx, int* actual_se
 	if (actual_selected) *actual_selected = effective_top_n;
 
 	if (effective_top_n < top_n) {
-		LOG_WARN("StockSelector::ScoreAndSelect - tradable ({}) < top_n ({}), capped to {}",
+		LOG_DEBUG("StockSelector::ScoreAndSelect - tradable ({}) < top_n ({}), capped to {}",
 			static_cast<int>(scores.size()), top_n, effective_top_n);
 	}
 
