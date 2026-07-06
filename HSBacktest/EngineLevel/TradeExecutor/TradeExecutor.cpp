@@ -306,10 +306,10 @@ void TradeExecutor::RecordDailySnapshot(int trade_date)
 	data_manager.nav_history.push_back(snapshot);
 }
 
-void TradeExecutor::ProcessCorporateActions(int stock_index, int date_abs_idx)
+void TradeExecutor::ProcessCorporateActions(PositionRecord& pos, int date_abs_idx)
 {
+	int stock_index = pos.stock_index;
 	GlobalData* gd = GlobalData::GetGlobalData();
-	//gd不需要判断是否为空，不可能为空
 
 	StockKData* skd = gd->get_stock_k_data(stock_index);
 	if (!skd) return;
@@ -323,42 +323,37 @@ void TradeExecutor::ProcessCorporateActions(int stock_index, int date_abs_idx)
 	}
 	const auto& fin = fin_datas[date_abs_idx];
 
-	// 查找持仓
-	auto it = std::find_if(data_manager.positions.begin(), data_manager.positions.end(),
-		[stock_index](const PositionRecord& p) { return p.stock_index == stock_index; });
-	if (it == data_manager.positions.end()) return;
-
 	// === 1. 拆股/送股处理 ===
 	if (std::abs(fin.split_ratio - 1.0) > 1e-10) {
-		int old_shares = it->shares;
-		it->shares = static_cast<int>(it->shares * fin.split_ratio);
-		it->avg_cost /= fin.split_ratio; // 成本按比例下调
+		int old_shares = pos.shares;
+		pos.shares = static_cast<int>(pos.shares * fin.split_ratio);
+		pos.avg_cost /= fin.split_ratio; // 成本按比例下调
 
 		LOG_DEBUG("CORP_ACT SPLIT | date_abs={} | stock_idx={} | split_ratio={:.4f} | shares {} -> {} | avg_cost {:.4f} -> {:.4f}",
 			date_abs_idx, stock_index, fin.split_ratio,
-			old_shares, it->shares,
-			old_shares > 0 ? it->avg_cost * fin.split_ratio : 0.0, it->avg_cost);
+			old_shares, pos.shares,
+			old_shares > 0 ? pos.avg_cost * fin.split_ratio : 0.0, pos.avg_cost);
 	}
 
 	// === 2. 现金分红处理 ===
 	if (fin.cash_dividend > 1e-10) {
-		double dividend = fin.cash_dividend * it->shares;
+		double dividend = fin.cash_dividend * pos.shares;
 
 		data_manager.available_capital += dividend;
 		data_manager.total_net_value += dividend;
 
 		// 分红计入已实现盈亏
-		it->pnl += dividend;
+		pos.pnl += dividend;
 
 		LOG_DEBUG("CORP_ACT DIVIDEND | date_abs={} | stock_idx={} | dividend_per_share={:.4f} | shares={} | total_dividend={:.2f} | cash={:.2f}",
-			date_abs_idx, stock_index, fin.cash_dividend, it->shares, dividend, data_manager.available_capital);
+			date_abs_idx, stock_index, fin.cash_dividend, pos.shares, dividend, data_manager.available_capital);
 	}
 }
 
 void TradeExecutor::ProcessAllCorporateActions(int date_abs_idx)
 {
-	for (const auto& pos : data_manager.positions) {
-		ProcessCorporateActions(pos.stock_index, date_abs_idx);
+	for (auto& pos : data_manager.positions) {
+		ProcessCorporateActions(pos, date_abs_idx);
 	}
 }
 

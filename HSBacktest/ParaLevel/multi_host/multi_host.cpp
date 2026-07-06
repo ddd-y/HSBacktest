@@ -163,6 +163,9 @@ void HostManager::work_stealing_loop()
 	std::srand(static_cast<unsigned>(rank) * 12345u +
 	           static_cast<unsigned>(std::time(nullptr)) % 10007u);
 
+	// ---- 预创建引擎池，避免每次任务都 new/delete ----
+	MultiRunner::MultiRunInit(Configer::GetInitCapital());
+
 	// ---- 主循环 ----
 	while (!globally_done_)
 	{
@@ -231,7 +234,7 @@ void HostManager::work_stealing_loop()
 				rank, task.start, task.end, task_queue_.size());
 
 			gd->MPI_ChangeDataRange(task.start, task.end);
-			MultiRunner::MultiRun(task.start);
+			MultiRunner::MultiRunReuse(task.start);
 			// 结果自动累积到 PerformanceCollector
 		}
 		// =========================================
@@ -256,6 +259,9 @@ void HostManager::work_stealing_loop()
 			}
 		}
 	}
+
+	// ---- 清理引擎池 ----
+	MultiRunner::MultiRunCleanup();
 }
 
 // ===================================================================

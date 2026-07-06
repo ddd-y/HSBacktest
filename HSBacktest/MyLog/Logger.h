@@ -24,7 +24,7 @@ namespace HSBacktest {
             size_t max_file_size = 10 * 1024 * 1024,
             size_t max_files = 5);
 
-        auto getLogger() { return _logger; }
+        auto getLogger() { return _logger.get(); }
 
     private:
         Logger() = default;

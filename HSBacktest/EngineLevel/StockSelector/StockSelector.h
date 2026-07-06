@@ -69,11 +69,6 @@ public:
 private:
 	// ===== 内部方法 =====
 
-	// 横截面Z-score标准化（去除异常值影响，使用MAD或3-sigma截断）
-	// @param values 所有股票在某因子上的值（按stock_index排列）
-	// @param tradable_mask 可交易标记，tradable_mask[i]=true 表示该股票可交易；为空则全部纳入标准化
-	void CrossSectionalNormalize(std::vector<double>& values, const std::vector<bool>* tradable_mask = nullptr) const;
-
 	// 判断指定股票在指定调仓日是否可交易（非退市、非停牌、非涨停）
 	bool IsTradable(const StockKData& kdata, int data_idx) const;
 

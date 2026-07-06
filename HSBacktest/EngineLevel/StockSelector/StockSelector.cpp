@@ -6,55 +6,8 @@
 #include "../../MyLog/Logger.h"
 #include <algorithm>
 #include <cmath>
-#include <limits>
 #include <numeric>
-#include <map>
-#include <set>
-
-void StockSelector::CrossSectionalNormalize(std::vector<double>& values, const std::vector<bool>* tradable_mask) const
-{
-	if (values.empty()) return;
-
-	// 仅对可交易的股票计算均值和标准差
-	double sum = 0.0;
-	int count = 0;
-	for (size_t i = 0; i < values.size(); ++i) {
-		if (tradable_mask && !(*tradable_mask)[i]) continue;
-		sum += values[i];
-		++count;
-	}
-	if (count == 0) return;
-
-	double mean = sum / count;
-
-	double sq_sum = 0.0;
-	for (size_t i = 0; i < values.size(); ++i) {
-		if (tradable_mask && !(*tradable_mask)[i]) continue;
-		double diff = values[i] - mean;
-		sq_sum += diff * diff;
-	}
-	double stddev = std::sqrt(sq_sum / count);
-
-	if (stddev < 1e-10) {
-		for (size_t i = 0; i < values.size(); ++i) {
-			if (!tradable_mask || (*tradable_mask)[i])
-				values[i] = 0.0;
-		}
-		return;
-	}
-
-	// 3-sigma截断 + Z-score标准化（仅对可交易股票）
-	for (size_t i = 0; i < values.size(); ++i) {
-		if (tradable_mask && !(*tradable_mask)[i]) {
-			values[i] = std::numeric_limits<double>::lowest();
-			continue;
-		}
-		double z = (values[i] - mean) / stddev;
-		if (z > 3.0) z = 3.0;
-		if (z < -3.0) z = -3.0;
-		values[i] = z;
-	}
-}
+#include <unordered_map>
 
 bool StockSelector::IsTradable(const StockKData& kdata, int data_idx) const
 {
@@ -104,10 +57,10 @@ std::vector<StockScoreRecord> StockSelector::ScoreAllStocks(int rebalance_idx) c
 	LOG_DEBUG("StockSelector::ScoreAllStocks - {} / {} stocks are tradable at rebalance_idx={}",
 		tradable_count, stock_count, rebalance_idx);
 
-	// 第二步：获取权重（直接从 GlobalData 拿）
-	std::array<double, FACTOR_NUM> weights = gd->GetWeights(adjustParamIndex);
+	if (tradable_count == 0) return {};
 
-	// 权重归一化
+	// 第二步：获取权重
+	std::array<double, FACTOR_NUM> weights = gd->GetWeights(adjustParamIndex);
 	if (Configer::GetStrategyConfiger().GetAutoNormalizeWeights()) {
 		double weight_sum = std::accumulate(weights.begin(), weights.end(), 0.0);
 		if (weight_sum > 0.0) {
@@ -115,38 +68,49 @@ std::vector<StockScoreRecord> StockSelector::ScoreAllStocks(int rebalance_idx) c
 		}
 	}
 
-	// 第三步：收集所有股票的因子值（直接从 GlobalData::GetValue 拿）
-	std::array<std::vector<double>,FACTOR_NUM> factor_values_by_type;
-	for (int f = 0; f < FACTOR_NUM; ++f) {
-		factor_values_by_type[f].resize(stock_count, 0.0);
-	}
+	// ===== Pass 1: 一趟同时累加所有因子的 sum 和平方和 =====
+	std::array<double, FACTOR_NUM> sum{};
+	std::array<double, FACTOR_NUM> sq_sum{};
+	int count = 0;
 
 	for (int i = 0; i < stock_count; ++i) {
-		std::array<double, FACTOR_NUM> raw_values = gd->GetValue(i, rebalance_idx);
+		if (!tradable_mask[i]) continue;
+		auto raw = gd->GetValue(i, rebalance_idx);
 		for (int f = 0; f < FACTOR_NUM; ++f) {
-			factor_values_by_type[f][i] = raw_values[f];
+			double v = raw[f];
+			sum[f] += v;
+			sq_sum[f] += v * v;
 		}
+		++count;
 	}
 
-	// 第四步：横截面标准化（所有因子都参与）
+	// 计算各因子均值与标准差（Var(X) = E[X²] - E[X]²）
+	std::array<double, FACTOR_NUM> mean{}, stddev{};
 	for (int f = 0; f < FACTOR_NUM; ++f) {
-		CrossSectionalNormalize(factor_values_by_type[f], &tradable_mask);
+		mean[f] = sum[f] / count;
+		double variance = sq_sum[f] / count - mean[f] * mean[f];
+		if (variance < 1e-10) variance = 1e-10;
+		stddev[f] = std::sqrt(variance);
 	}
 
-	// 第五步：合成复合得分（仅保留可交易股票）
+	// ===== Pass 2: z-score + 3-sigma 截断 + 合成复合得分，直接产出结果 =====
 	std::vector<StockScoreRecord> results;
 	results.reserve(tradable_count);
 
 	for (int i = 0; i < stock_count; ++i) {
 		if (!tradable_mask[i]) continue;
 
+		auto raw = gd->GetValue(i, rebalance_idx);
 		StockScoreRecord rec;
 		rec.stock_index = i;
 		rec.composite_score = 0.0;
 
 		for (int f = 0; f < FACTOR_NUM; ++f) {
-			rec.factor_scores[f] = factor_values_by_type[f][i];
-			rec.composite_score += factor_values_by_type[f][i] * weights[f];
+			double z = (raw[f] - mean[f]) / stddev[f];
+			if (z > 3.0) z = 3.0;
+			if (z < -3.0) z = -3.0;
+			rec.factor_scores[f] = z;
+			rec.composite_score += z * weights[f];
 		}
 		results.push_back(std::move(rec));
 	}
@@ -158,13 +122,16 @@ std::vector<int> StockSelector::SelectTopN(const std::vector<StockScoreRecord>& 
 {
 	if (scores.empty() || top_n <= 0) return {};
 
+	int n = std::min(top_n, static_cast<int>(scores.size()));
+
+	// partial_sort: O(N log n) vs 原来 std::sort 的 O(N log N)
 	std::vector<StockScoreRecord> sorted = scores;
-	std::sort(sorted.begin(), sorted.end(),
+	auto mid = sorted.begin() + n;
+	std::partial_sort(sorted.begin(), mid, sorted.end(),
 		[](const StockScoreRecord& a, const StockScoreRecord& b) {
 			return a.composite_score > b.composite_score;
 		});
 
-	int n = std::min(top_n, static_cast<int>(sorted.size()));
 	std::vector<int> selected(n);
 	for (int i = 0; i < n; ++i) {
 		selected[i] = sorted[i].stock_index;
@@ -184,8 +151,8 @@ std::vector<int> StockSelector::SelectIndustryNeutral(
 	GlobalData* gd = GlobalData::GetGlobalData();
 	if (!gd) return SelectTopN(scores, total_target);  // fallback
 
-	// 1. 按行业分组，每组内按得分降序排列
-	std::map<int32_t, std::vector<StockScoreRecord>> industry_groups;
+	// 1. 按行业分组（unordered_map O(1) 插入，避免 std::map 的 rb-tree 开销）
+	std::unordered_map<int32_t, std::vector<StockScoreRecord>> industry_groups;
 	for (const auto& rec : scores) {
 		StockKData* skd = gd->get_stock_k_data(rec.stock_index);
 		int32_t ind_code = skd ? skd->GetIndustryCode() : 0;
@@ -195,12 +162,10 @@ std::vector<int> StockSelector::SelectIndustryNeutral(
 
 	int num_industries = static_cast<int>(industry_groups.size());
 	if (num_industries <= 1) {
-		// 只有一个行业或没有行业数据，回退到全局排名
 		LOG_DEBUG("StockSelector::SelectIndustryNeutral - only {} industry group(s), fallback to global ranking", num_industries);
 		return SelectTopN(scores, total_target);
 	}
 
-	// 校验：min_per_industry × 行业数 不能超过 total_target
 	int effective_min = min_per_industry;
 	if (min_per_industry * num_industries > total_target) {
 		effective_min = total_target / num_industries;
@@ -217,42 +182,52 @@ std::vector<int> StockSelector::SelectIndustryNeutral(
 			});
 	}
 
-	// 3. 第一轮：每个行业先取 effective_min 只
-	std::set<int> selected_set;        // 去重
-	std::map<int32_t, int> industry_pick_count;  // 每个行业已选数量
+	// 3. vector<bool> 代替 std::set：O(1) 插入/查找，零析构开销
+	int stock_count = gd->get_stock_count();
+	std::vector<bool> selected_mask(stock_count, false);
+	int selected_count = 0;
+	std::unordered_map<int32_t, int> industry_pick_count;
 
 	for (auto& [ind, stocks] : industry_groups) {
 		int take = std::min(effective_min, static_cast<int>(stocks.size()));
 		for (int i = 0; i < take; ++i) {
-			selected_set.insert(stocks[i].stock_index);
+			selected_mask[stocks[i].stock_index] = true;
+			++selected_count;
 		}
 		industry_pick_count[ind] = take;
 	}
 
-	// 4. 第二轮：剩余名额按全局得分补足
-	int remaining = total_target - static_cast<int>(selected_set.size());
+	// 4. 第二轮：剩余名额按全局得分补足（存指针避免拷贝 StockScoreRecord）
+	int remaining = total_target - selected_count;
 	if (remaining > 0) {
-		// 所有已选的跳过，未选的按全局得分排序
-		std::vector<StockScoreRecord> remaining_candidates;
+		std::vector<const StockScoreRecord*> remaining_candidates;
+		remaining_candidates.reserve(scores.size() - selected_count);
 		for (const auto& rec : scores) {
-			if (selected_set.count(rec.stock_index) == 0) {
-				remaining_candidates.push_back(rec);
+			if (!selected_mask[rec.stock_index]) {
+				remaining_candidates.push_back(&rec);
 			}
 		}
 		std::sort(remaining_candidates.begin(), remaining_candidates.end(),
-			[](const StockScoreRecord& a, const StockScoreRecord& b) {
-				return a.composite_score > b.composite_score;
+			[](const StockScoreRecord* a, const StockScoreRecord* b) {
+				return a->composite_score > b->composite_score;
 			});
 
 		int take = std::min(remaining, static_cast<int>(remaining_candidates.size()));
 		for (int i = 0; i < take; ++i) {
-			selected_set.insert(remaining_candidates[i].stock_index);
+			selected_mask[remaining_candidates[i]->stock_index] = true;
 		}
 	}
 
-	std::vector<int> result(selected_set.begin(), selected_set.end());
+	// 从 mask 收集结果（保持 scores 的相对顺序）
+	std::vector<int> result;
+	result.reserve(total_target);
+	for (const auto& rec : scores) {
+		if (selected_mask[rec.stock_index]) {
+			result.push_back(rec.stock_index);
+		}
+	}
 
-	// 日志：输出每个行业的选股数
+	// 日志
 	std::string industry_log;
 	for (auto& [ind, count] : industry_pick_count) {
 		industry_log += "ind=" + std::to_string(ind) + ":" + std::to_string(count) + " ";

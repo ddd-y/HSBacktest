@@ -23,7 +23,7 @@
 #include <vector>
 #include <algorithm>
 #include <numeric>
-#include<set>
+#include<unordered_map>
 
 // --- 断言宏 ---
 #define FS_CHECK(cond, msg) \
@@ -39,21 +39,18 @@
 static bool fs_all_passed = true;
 
 // ==========================================
-// A. z-score 手工计算 vs StockSelector::CrossSectionalNormalize
+// A. z-score 标准化手工验证（与 ScoreAllStocks 内联逻辑一致）
 // ==========================================
 void test_zscore_normalization()
 {
     LOG_INFO("=== [A] z-score 标准化测试 ===");
-
-    StockSelector selector;
 
     // 准备 5 只股票的因子值
     // 手工预期：mean=3.0, stddev≈1.41, z_i=(x_i-3)/1.41, clip to [-3,3]
     std::vector<double> values = {1.0, 2.0, 3.0, 4.0, 5.0};
     std::vector<bool> tradable = {true, true, true, true, true};
 
-    // 调用 CrossSectionalNormalize（它是 private 的，通过 public 接口间接测试）
-    // 这里直接手算验证 StockSelector 的内部逻辑
+    // 手工复现 ScoreAllStocks 中的 2-pass 归一化逻辑
     double sum = 0.0;
     int count = 0;
     for (size_t i = 0; i < values.size(); ++i) {
@@ -170,7 +167,8 @@ void test_industry_neutral_selection()
     // （与 StockSelector::SelectIndustryNeutral 逐行对齐，已在 benchmark v3 中验证）
 
     // 手工实现（与 StockSelector::SelectIndustryNeutral 完全一致）：
-    std::map<int32_t, std::vector<StockScoreRecord>> groups;
+    // 注：新实现使用 unordered_map + vector<bool>，此处保持同步
+    std::unordered_map<int32_t, std::vector<StockScoreRecord>> groups;
     for (const auto& rec : scores) {
         // 模拟 industry_code：index 0-2 → 1, 3-5 → 2
         int32_t ind = rec.stock_index < 3 ? 1 : 2;
@@ -184,18 +182,21 @@ void test_industry_neutral_selection()
             });
     }
 
-    std::set<int> selected;
+    std::vector<bool> selected_mask(6, false);
+    int selected_count = 0;
     for (auto& [ind, stocks] : groups) {
         int take = std::min(1, static_cast<int>(stocks.size()));  // min_per_industry=1
-        for (int i = 0; i < take; ++i)
-            selected.insert(stocks[i].stock_index);
+        for (int i = 0; i < take; ++i) {
+            selected_mask[stocks[i].stock_index] = true;
+            ++selected_count;
+        }
     }
 
-    int remaining = 4 - static_cast<int>(selected.size());  // top_n=4
+    int remaining = 4 - selected_count;  // top_n=4
     if (remaining > 0) {
         std::vector<StockScoreRecord> candidates;
         for (const auto& rec : scores) {
-            if (!selected.count(rec.stock_index))
+            if (!selected_mask[rec.stock_index])
                 candidates.push_back(rec);
         }
         std::sort(candidates.begin(), candidates.end(),
@@ -203,16 +204,19 @@ void test_industry_neutral_selection()
                 return a.composite_score > b.composite_score;
             });
         for (int i = 0; i < std::min(remaining, static_cast<int>(candidates.size())); ++i)
-            selected.insert(candidates[i].stock_index);
+            selected_mask[candidates[i].stock_index] = true;
     }
 
-    FS_CHECK(selected.count(0) && selected.count(3) && selected.count(4) && selected.count(1),
+    // 验证选中结果
+    FS_CHECK(selected_mask[0] && selected_mask[3] && selected_mask[4] && selected_mask[1],
         "行业中性选股={0,3,4,1} (实际="
-        + [&](){ std::string s; for(int x:selected) s+=std::to_string(x)+" "; return s; }() + ")");
-    FS_CHECK(!selected.count(2) && !selected.count(5),
+        + [&](){ std::string s; for(int i=0;i<6;++i) if(selected_mask[i]) s+=std::to_string(i)+" "; return s; }() + ")");
+    FS_CHECK(!selected_mask[2] && !selected_mask[5],
         "未选中低分股2(0.5)和5(0.0)");
-    FS_CHECK(selected.size() == 4,
-        "正好4只 (实际=" + std::to_string(selected.size()) + ")");
+	int final_count = 0;
+	for (int i = 0; i < 6; ++i) if (selected_mask[i]) ++final_count;
+	FS_CHECK(final_count == 4,
+		"正好4只 (实际=" + std::to_string(final_count) + ")");
 }
 
 // ==========================================

@@ -147,9 +147,9 @@ public:
 	void RecordDailySnapshot(int trade_date);
 
 	// 处理公司行为（分红、拆股），更新持仓和可用资金
-	// @param stock_index 股票索引
+	// @param pos 持仓引用，直接在此对象上修改
 	// @param date_abs_idx 在 GlobalData dates 中的绝对索引
-	void ProcessCorporateActions(int stock_index, int date_abs_idx);
+	void ProcessCorporateActions(PositionRecord& pos, int date_abs_idx);
 
 	// 批量处理所有持仓的公司行为
 	// @param date_abs_idx 在 GlobalData dates 中的绝对索引
